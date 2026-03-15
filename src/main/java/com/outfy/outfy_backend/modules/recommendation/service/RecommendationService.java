@@ -9,6 +9,7 @@ import com.outfy.outfy_backend.modules.recommendation.dto.response.Recommendatio
 import com.outfy.outfy_backend.modules.recommendation.dto.response.RecommendationSessionResponse;
 import com.outfy.outfy_backend.modules.recommendation.entity.RecommendationResultEntity;
 import com.outfy.outfy_backend.modules.recommendation.entity.RecommendationSession;
+import com.outfy.outfy_backend.modules.recommendation.mapper.RecommendationMapper;
 import com.outfy.outfy_backend.modules.recommendation.repository.RecommendationResultRepository;
 import com.outfy.outfy_backend.modules.recommendation.repository.RecommendationSessionRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -32,28 +33,29 @@ public class RecommendationService {
     private final RecommendationGateway recommendationGateway;
     private final ClothingItemRepository clothingItemRepository;
     private final ObjectMapper objectMapper;
+    private final RecommendationMapper recommendationMapper;
 
     public RecommendationService(
             RecommendationSessionRepository recommendationSessionRepository,
             RecommendationResultRepository recommendationResultRepository,
             RecommendationGateway recommendationGateway,
             ClothingItemRepository clothingItemRepository,
-            ObjectMapper objectMapper) {
+            ObjectMapper objectMapper,
+            RecommendationMapper recommendationMapper) {
         this.recommendationSessionRepository = recommendationSessionRepository;
         this.recommendationResultRepository = recommendationResultRepository;
         this.recommendationGateway = recommendationGateway;
         this.clothingItemRepository = clothingItemRepository;
         this.objectMapper = objectMapper;
+        this.recommendationMapper = recommendationMapper;
     }
 
     @Transactional
     public RecommendationSessionResponse createRecommendation(CreateRecommendationRequest request) {
         logger.info("Creating recommendation session for user: {}", request.getUserId());
 
-        RecommendationSession session = new RecommendationSession();
-        session.setUserId(request.getUserId());
-        session.setBodyProfileId(request.getBodyProfileId());
-        session.setOccasion(request.getOccasion());
+        // Use mapper to convert request to entity
+        RecommendationSession session = recommendationMapper.toEntity(request);
         session.setStatus("PENDING");
 
         if (request.getPreferences() != null) {
@@ -67,18 +69,18 @@ public class RecommendationService {
         RecommendationSession saved = recommendationSessionRepository.save(session);
         logger.info("Created recommendation session with id: {}", saved.getId());
 
-        return toResponse(saved);
+        return toResponseWithItems(saved);
     }
 
     public RecommendationSessionResponse getRecommendationById(Long id) {
         RecommendationSession session = recommendationSessionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("RecommendationSession", "id", id));
-        return toResponse(session);
+        return toResponseWithItems(session);
     }
 
     public List<RecommendationSessionResponse> getRecommendationsByUserId(Long userId) {
         return recommendationSessionRepository.findByUserId(userId).stream()
-                .map(this::toResponse)
+                .map(this::toResponseWithItems)
                 .collect(Collectors.toList());
     }
 
@@ -130,19 +132,9 @@ public class RecommendationService {
         return toResponseWithItems(session);
     }
 
-    private RecommendationSessionResponse toResponse(RecommendationSession session) {
-        RecommendationSessionResponse response = new RecommendationSessionResponse();
-        response.setId(session.getId());
-        response.setUserId(session.getUserId());
-        response.setBodyProfileId(session.getBodyProfileId());
-        response.setOccasion(session.getOccasion());
-        response.setStatus(session.getStatus());
-        response.setCreatedAt(session.getCreatedAt());
-        return response;
-    }
-
     private RecommendationSessionResponse toResponseWithItems(RecommendationSession session) {
-        RecommendationSessionResponse response = toResponse(session);
+        // Use mapper for basic session mapping
+        RecommendationSessionResponse response = recommendationMapper.toResponse(session);
 
         List<RecommendationResultEntity> results = recommendationResultRepository
                 .findByRecommendationSessionId(session.getId());

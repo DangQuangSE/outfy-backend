@@ -7,6 +7,7 @@ import com.outfy.outfy_backend.modules.tryon.dto.response.TryOnResult;
 import com.outfy.outfy_backend.modules.tryon.dto.response.TryOnSessionResponse;
 import com.outfy.outfy_backend.modules.tryon.entity.TryOnResultEntity;
 import com.outfy.outfy_backend.modules.tryon.entity.TryOnSession;
+import com.outfy.outfy_backend.modules.tryon.mapper.TryOnMapper;
 import com.outfy.outfy_backend.modules.tryon.repository.TryOnResultRepository;
 import com.outfy.outfy_backend.modules.tryon.repository.TryOnSessionRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -29,16 +30,19 @@ public class TryOnService {
     private final TryOnResultRepository tryOnResultRepository;
     private final TryOnGateway tryOnGateway;
     private final ObjectMapper objectMapper;
+    private final TryOnMapper tryOnMapper;
 
     public TryOnService(
             TryOnSessionRepository tryOnSessionRepository,
             TryOnResultRepository tryOnResultRepository,
             TryOnGateway tryOnGateway,
-            ObjectMapper objectMapper) {
+            ObjectMapper objectMapper,
+            TryOnMapper tryOnMapper) {
         this.tryOnSessionRepository = tryOnSessionRepository;
         this.tryOnResultRepository = tryOnResultRepository;
         this.tryOnGateway = tryOnGateway;
         this.objectMapper = objectMapper;
+        this.tryOnMapper = tryOnMapper;
     }
 
     @Transactional
@@ -46,28 +50,25 @@ public class TryOnService {
         logger.info("Creating try-on session for user: {}, bodyProfile: {}, clothing: {}",
                 request.getUserId(), request.getBodyProfileId(), request.getClothingItemId());
 
-        TryOnSession session = new TryOnSession();
-        session.setUserId(request.getUserId());
-        session.setBodyProfileId(request.getBodyProfileId());
-        session.setClothingItemId(request.getClothingItemId());
-        session.setRequestedSize(request.getSize());
+        // Use mapper to convert request to entity
+        TryOnSession session = tryOnMapper.toEntity(request);
         session.setStatus("PENDING");
 
         TryOnSession saved = tryOnSessionRepository.save(session);
         logger.info("Created try-on session with id: {}", saved.getId());
 
-        return toResponse(saved);
+        return tryOnMapper.toResponse(saved);
     }
 
     public TryOnSessionResponse getTryOnSessionById(Long id) {
         TryOnSession session = tryOnSessionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("TryOnSession", "id", id));
-        return toResponse(session);
+        return tryOnMapper.toResponse(session);
     }
 
     public List<TryOnSessionResponse> getTryOnSessionsByUserId(Long userId) {
         return tryOnSessionRepository.findByUserId(userId).stream()
-                .map(this::toResponse)
+                .map(tryOnMapper::toResponse)
                 .collect(Collectors.toList());
     }
 
@@ -129,19 +130,6 @@ public class TryOnService {
         }
 
         return result;
-    }
-
-    private TryOnSessionResponse toResponse(TryOnSession session) {
-        TryOnSessionResponse response = new TryOnSessionResponse();
-        response.setId(session.getId());
-        response.setUserId(session.getUserId());
-        response.setBodyProfileId(session.getBodyProfileId());
-        response.setClothingItemId(session.getClothingItemId());
-        response.setStatus(session.getStatus());
-        response.setRequestedSize(session.getRequestedSize());
-        response.setCreatedAt(session.getCreatedAt());
-        response.setUpdatedAt(session.getUpdatedAt());
-        return response;
     }
 }
 

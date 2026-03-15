@@ -1,5 +1,6 @@
 package com.outfy.outfy_backend.modules.auth.entity;
 
+import com.outfy.outfy_backend.modules.auth.enums.UserRole;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -32,11 +33,12 @@ public class User {
     @Column(name = "avatar_url")
     private String avatarUrl;
 
-    @Column
-    private String role;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private UserRole role = UserRole.USER;
 
-    @Column
-    private Boolean isActive;
+    @Column(nullable = false)
+    private Boolean isActive = true;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -49,7 +51,7 @@ public class User {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
         if (role == null) {
-            role = "USER";
+            role = UserRole.USER;
         }
         if (isActive == null) {
             isActive = true;
@@ -78,8 +80,8 @@ public class User {
     public void setGender(String gender) { this.gender = gender; }
     public String getAvatarUrl() { return avatarUrl; }
     public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
-    public String getRole() { return role; }
-    public void setRole(String role) { this.role = role; }
+    public UserRole getRole() { return role; }
+    public void setRole(UserRole role) { this.role = role; }
     public Boolean getIsActive() { return isActive; }
     public void setIsActive(Boolean isActive) { this.isActive = isActive; }
     public LocalDateTime getCreatedAt() { return createdAt; }
