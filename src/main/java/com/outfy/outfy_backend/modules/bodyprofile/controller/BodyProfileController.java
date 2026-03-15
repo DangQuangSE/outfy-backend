@@ -3,6 +3,7 @@ package com.outfy.outfy_backend.modules.bodyprofile.controller;
 import com.outfy.outfy_backend.common.constant.AppConstants;
 import com.outfy.outfy_backend.common.response.ApiResponse;
 import com.outfy.outfy_backend.modules.bodyprofile.dto.request.CreateBodyProfileRequest;
+import com.outfy.outfy_backend.modules.bodyprofile.dto.request.GenerateAvatarRequest;
 import com.outfy.outfy_backend.modules.bodyprofile.dto.response.BodyGenerationResult;
 import com.outfy.outfy_backend.modules.bodyprofile.dto.response.BodyProfileResponse;
 import com.outfy.outfy_backend.modules.bodyprofile.service.BodyProfileService;
@@ -54,6 +55,17 @@ public class BodyProfileController {
     public ResponseEntity<ApiResponse<BodyGenerationResult>> getAvatarResult(@PathVariable Long id) {
         BodyGenerationResult result = bodyProfileService.getAvatarResult(id);
         return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
+    /**
+     * Generate avatar directly from measurements (for demo without database)
+     * This is the main endpoint for the 3D body pipeline demo
+     */
+    @PostMapping("/generate-avatar")
+    public ResponseEntity<ApiResponse<BodyGenerationResult>> generateAvatarDirect(
+            @Valid @RequestBody GenerateAvatarRequest request) {
+        BodyGenerationResult result = bodyProfileService.generateAvatarDirect(request);
+        return ResponseEntity.ok(ApiResponse.success("Avatar generated successfully", result));
     }
 }
 
