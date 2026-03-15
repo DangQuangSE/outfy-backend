@@ -35,3 +35,6 @@ build/
 .env
 .env.*
 !.env.example
+
+### 3D Models (Local) ###
+src/main/resources/static/models/
