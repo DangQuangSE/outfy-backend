@@ -9,6 +9,8 @@ import com.outfy.outfy_backend.modules.auth.dto.response.AuthResponse;
 import com.outfy.outfy_backend.modules.auth.dto.response.UserResponse;
 import com.outfy.outfy_backend.modules.auth.entity.RefreshToken;
 import com.outfy.outfy_backend.modules.auth.entity.User;
+import com.outfy.outfy_backend.modules.auth.enums.UserRole;
+import com.outfy.outfy_backend.modules.auth.mapper.UserMapper;
 import com.outfy.outfy_backend.modules.auth.repository.RefreshTokenRepository;
 import com.outfy.outfy_backend.modules.auth.repository.UserRepository;
 import org.slf4j.Logger;
@@ -18,7 +20,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Service
 public class AuthService {
@@ -31,16 +32,19 @@ public class AuthService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final UserMapper userMapper;
 
     public AuthService(
             UserRepository userRepository,
             RefreshTokenRepository refreshTokenRepository,
             PasswordEncoder passwordEncoder,
-            JwtService jwtService) {
+            JwtService jwtService,
+            UserMapper userMapper) {
         this.userRepository = userRepository;
         this.refreshTokenRepository = refreshTokenRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.userMapper = userMapper;
     }
 
     @Transactional
@@ -51,12 +55,10 @@ public class AuthService {
             throw new BusinessRuleViolationException("Email already registered");
         }
 
-        User user = new User();
-        user.setEmail(request.getEmail());
+        // Use mapper to convert request to entity
+        User user = userMapper.toEntity(request);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setFullName(request.getFullName());
-        user.setPhone(request.getPhone());
-        user.setRole("USER");
+        user.setRole(UserRole.USER);
         user.setIsActive(true);
 
         User saved = userRepository.save(user);
@@ -122,7 +124,7 @@ public class AuthService {
     public UserResponse getUserById(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
-        return toUserResponse(user);
+        return userMapper.toResponse(user);
     }
 
     private AuthResponse generateAuthResponse(User user) {
@@ -142,22 +144,8 @@ public class AuthService {
         response.setRefreshToken(refreshToken);
         response.setTokenType("Bearer");
         response.setExpiresIn(ACCESS_TOKEN_EXPIRY_MINUTES * 60L);
-        response.setUser(toUserResponse(user));
+        response.setUser(userMapper.toResponse(user));
 
-        return response;
-    }
-
-    private UserResponse toUserResponse(User user) {
-        UserResponse response = new UserResponse();
-        response.setId(user.getId());
-        response.setEmail(user.getEmail());
-        response.setFullName(user.getFullName());
-        response.setPhone(user.getPhone());
-        response.setDateOfBirth(user.getDateOfBirth());
-        response.setGender(user.getGender());
-        response.setAvatarUrl(user.getAvatarUrl());
-        response.setRole(user.getRole());
-        response.setCreatedAt(user.getCreatedAt());
         return response;
     }
 }
