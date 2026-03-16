@@ -10,7 +10,11 @@
 │  AuthController                                               │
 │  ├─ POST /register          → AuthService.register()        │
 │  ├─ POST /verify-email      → AuthService.verifyEmail()     │
-│  └─ POST /resend-verification-email                         │
+│  ├─ POST /resend-verification-email                         │
+│  ├─ POST /login             → AuthService.login()           │
+│  ├─ POST /refresh           → AuthService.refreshToken()    │
+│  ├─ POST /logout            → AuthService.logout()     🔒  │
+│  └─ GET  /me                → AuthService.getUserById() 🔒  │
 │                                                               │
 ├─────────────────────────────────────────────────────────────┤
 │                      Service Layer                            │
@@ -171,6 +175,64 @@ Client                Controller              Service              Database
   │<─200 OK──────────────┤                      │                    │
 ```
 
+### Refresh Token Flow
+```
+Client                Controller              Service              Database
+  │                       │                      │                    │
+  ├─POST /refresh────────>│                      │                    │
+  │  {refreshToken}        ├─refreshToken()─────>│                    │
+  │                       │                      ├─find token────────>│
+  │                       │                      │                    ├─SELECT refresh_tokens
+  │                       │                      │                    │
+  │                       │                      ├─check isRevoked    │
+  │                       │                      ├─check expiresAt    │
+  │                       │                      ├─find user─────────>│
+  │                       │                      │                    ├─SELECT users
+  │                       │                      │                    │
+  │                       │                      ├─revoke old token──>│
+  │                       │                      │                    ├─UPDATE (isRevoked=true)
+  │                       │                      │                    │
+  │                       │                      ├─generate new JWT   │
+  │                       │                      ├─save new refresh──>│
+  │                       │                      │     token           ├─INSERT refresh_tokens
+  │                       │<─────AuthResponse────│                    │
+  │<─200 OK──────────────┤                      │                    │
+```
+
+### Logout Flow 🔒 (Requires Access Token)
+```
+Client                Controller              Service              Database
+  │                       │                      │                    │
+  ├─POST /logout─────────>│                      │                    │
+  │  [Authorization:       │                      │                    │
+  │   Bearer <token>]      │                      │                    │
+  │                       ├─getUserId from       │                    │
+  │                       │  SecurityContext      │                    │
+  │                       ├─logout(userId)──────>│                    │
+  │                       │                      ├─revoke ALL────────>│
+  │                       │                      │  refresh tokens     ├─UPDATE refresh_tokens
+  │                       │                      │                    │  SET isRevoked=true
+  │                       │                      │                    │  WHERE userId=?
+  │                       │<─────Success─────────│                    │
+  │<─200 OK──────────────┤                      │                    │
+```
+
+### Get Current User (/me) Flow 🔒 (Requires Access Token)
+```
+Client                Controller              Service              Database
+  │                       │                      │                    │
+  ├─GET /me──────────────>│                      │                    │
+  │  [Authorization:       │                      │                    │
+  │   Bearer <token>]      │                      │                    │
+  │                       ├─getUserId from       │                    │
+  │                       │  SecurityContext      │                    │
+  │                       ├─getUserById(id)─────>│                    │
+  │                       │                      ├─find user─────────>│
+  │                       │                      │                    ├─SELECT users
+  │                       │<─────UserResponse────│                    │
+  │<─200 OK──────────────┤                      │                    │
+```
+
 ## Entity Relationships
 
 ```
@@ -310,6 +372,105 @@ HTTP/1.1 400 Bad Request
 }
 ```
 
+### 5. Login Success Response
+```json
+POST /api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "john.doe@example.com",
+  "password": "SecurePassword123"
+}
+```
+
+```json
+HTTP/1.1 200 OK
+
+{
+  "success": true,
+  "message": "Login successful",
+  "data": {
+    "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
+    "refreshToken": "eyJhbGciOiJIUzI1NiJ9...",
+    "tokenType": "Bearer",
+    "expiresIn": 1800,
+    "user": {
+      "id": 1,
+      "email": "john.doe@example.com",
+      "fullName": "John Doe",
+      "isEmailVerified": true
+    }
+  }
+}
+```
+
+### 6. Refresh Token Request/Response
+```json
+POST /api/v1/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "eyJhbGciOiJIUzI1NiJ9..."
+}
+```
+
+```json
+HTTP/1.1 200 OK
+
+{
+  "success": true,
+  "message": "Token refreshed successfully",
+  "data": {
+    "accessToken": "eyJhbGciOiJIUzI1NiJ9...(new)",
+    "refreshToken": "eyJhbGciOiJIUzI1NiJ9...(new)",
+    "tokenType": "Bearer",
+    "expiresIn": 1800,
+    "user": { ... }
+  }
+}
+```
+
+### 7. Logout Request/Response 🔒
+```json
+POST /api/v1/auth/logout
+Authorization: Bearer <accessToken>
+```
+
+```json
+HTTP/1.1 200 OK
+
+{
+  "success": true,
+  "message": "Logout successful",
+  "data": null
+}
+```
+
+### 8. Get Current User (/me) Request/Response 🔒
+```json
+GET /api/v1/auth/me
+Authorization: Bearer <accessToken>
+```
+
+```json
+HTTP/1.1 200 OK
+
+{
+  "success": true,
+  "message": "User retrieved successfully",
+  "data": {
+    "id": 1,
+    "email": "john.doe@example.com",
+    "fullName": "John Doe",
+    "phone": "+1-555-0123",
+    "role": "USER",
+    "isEmailVerified": true,
+    "emailVerifiedAt": "2024-01-15T10:35:00",
+    "createdAt": "2024-01-15T10:30:00"
+  }
+}
+```
+
 ## Error Responses
 
 ### Invalid Email Format
@@ -374,6 +535,41 @@ HTTP/1.1 400 Bad Request
 }
 ```
 
+### Invalid Refresh Token
+```json
+HTTP/1.1 400 Bad Request
+{
+  "success": false,
+  "message": "Invalid refresh token",
+  "data": null
+}
+```
+
+### Refresh Token Expired
+```json
+HTTP/1.1 400 Bad Request
+{
+  "success": false,
+  "message": "Refresh token has expired",
+  "data": null
+}
+```
+
+### Refresh Token Revoked
+```json
+HTTP/1.1 400 Bad Request
+{
+  "success": false,
+  "message": "Refresh token has been revoked",
+  "data": null
+}
+```
+
+### Unauthorized (no/invalid access token for /me, /logout)
+```json
+HTTP/1.1 401 Unauthorized
+```
+
 ## Configuration Properties
 
 | Property | Default | Description |
@@ -402,6 +598,9 @@ HTTP/1.1 400 Bad Request
 - ✅ Login checks `isEmailVerified` before issuing tokens
 - ✅ Password encoded with BCrypt
 - ✅ JWT-based stateless authentication
+- ✅ `/me` and `/logout` require valid access token (`.authenticated()` in SecurityConfig)
+- ✅ Refresh token rotation: old token revoked, new token issued
+- ✅ Logout revokes ALL refresh tokens for the user
 
 ### Email Security
 - ✅ SMTP with TLS/SSL (port 587)

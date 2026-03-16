@@ -13,6 +13,8 @@ import com.outfy.outfy_backend.modules.auth.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -62,19 +64,21 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<ApiResponse<Void>> logout(@RequestHeader("Authorization") String authHeader) {
-        // Extract user ID from token - for now we'll assume the user ID is available
-        // In a real implementation, this would be extracted from the JWT
-        // This is a placeholder - actual implementation would need to parse the token
+    public ResponseEntity<ApiResponse<Void>> logout() {
+        Long userId = getCurrentUserId();
+        authService.logout(userId);
         return ResponseEntity.ok(ApiResponse.success("Logout successful", null));
     }
 
     @GetMapping("/me")
-    public ResponseEntity<ApiResponse<UserResponse>> getCurrentUser(
-            @RequestHeader("Authorization") String authHeader) {
-        // This would extract user ID from token and get user details
-        // Placeholder implementation
-        return ResponseEntity.ok(ApiResponse.success(null));
+    public ResponseEntity<ApiResponse<UserResponse>> getCurrentUser() {
+        Long userId = getCurrentUserId();
+        UserResponse response = authService.getUserById(userId);
+        return ResponseEntity.ok(ApiResponse.success("User retrieved successfully", response));
+    }
+
+    private Long getCurrentUserId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return (Long) authentication.getPrincipal();
     }
 }
-
