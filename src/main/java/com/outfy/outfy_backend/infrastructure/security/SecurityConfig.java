@@ -38,6 +38,9 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/auth/me", "/api/v1/auth/logout").authenticated()
                 .requestMatchers("/h2-console/**").permitAll()
                 .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
+                // Public access for static model files
+                .requestMatchers("/models/**").permitAll()
+                .requestMatchers("/previews/**").permitAll()
                 .requestMatchers("/api/v1/auth/**").permitAll()
                 .anyRequest().authenticated()
             )
