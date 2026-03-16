@@ -6,7 +6,7 @@ import com.outfy.outfy_backend.modules.bodyprofile.dto.request.CreateBodyProfile
 import com.outfy.outfy_backend.modules.bodyprofile.dto.request.GenerateAvatarRequest;
 import com.outfy.outfy_backend.modules.bodyprofile.dto.response.BodyGenerationResult;
 import com.outfy.outfy_backend.modules.bodyprofile.dto.response.BodyProfileResponse;
-import com.outfy.outfy_backend.modules.bodyprofile.service.BodyProfileService;
+import com.outfy.outfy_backend.modules.bodyprofile.interfaces.IBodyProfileService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,9 +18,9 @@ import java.util.List;
 @RequestMapping(AppConstants.API_V1 + "/body-profiles")
 public class BodyProfileController {
 
-    private final BodyProfileService bodyProfileService;
+    private final IBodyProfileService bodyProfileService;
 
-    public BodyProfileController(BodyProfileService bodyProfileService) {
+    public BodyProfileController(IBodyProfileService bodyProfileService) {
         this.bodyProfileService = bodyProfileService;
     }
 

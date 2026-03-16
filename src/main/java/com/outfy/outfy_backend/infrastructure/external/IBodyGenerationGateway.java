@@ -2,7 +2,14 @@ package com.outfy.outfy_backend.infrastructure.external;
 
 import com.outfy.outfy_backend.modules.bodyprofile.dto.response.BodyGenerationResult;
 
-public interface BodyGenerationGateway {
+/**
+ * Gateway interface for body generation external service
+ */
+public interface IBodyGenerationGateway {
+
+    /**
+     * Generate avatar for an existing body profile
+     */
     BodyGenerationResult generate(Long bodyProfileId);
 
     /**

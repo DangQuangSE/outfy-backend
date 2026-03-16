@@ -9,7 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Component
-public class MockBodyGenerationGateway implements BodyGenerationGateway {
+public class MockBodyGenerationGateway implements IBodyGenerationGateway {
     
     private static final Logger logger = LoggerFactory.getLogger(MockBodyGenerationGateway.class);
 
