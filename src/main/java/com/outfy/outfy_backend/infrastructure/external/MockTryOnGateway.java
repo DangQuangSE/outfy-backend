@@ -65,7 +65,7 @@ public class MockTryOnGateway implements TryOnGateway {
         AVATAR_PRESETS.put("plus", "Plus body type - fuller build");
     }
 
-    // Try-on model path: /models/try-on/body_{bodyType}_cloth_{category}.glb
+    // Try-on model path: /models/try-on/body_{bodyType}_cloth_{category1}_{category2}.glb
     private static final String TRYON_MODEL_PATH = "/models/try-on";
 
     private final Random random = new Random();
@@ -215,14 +215,54 @@ public class MockTryOnGateway implements TryOnGateway {
 
     private String generatePreviewUrl(String avatarId, String category) {
         // Generate try-on model URL matching user's file naming convention
-        // User creates: /models/try-on/body_{bodyType}_cloth_{category}.glb
-        // e.g., /models/try-on/body_slim_male_cloth_hoodie.glb
-        // e.g., /models/try-on/body_curvy_female_cloth_dress.glb
+        // User creates: /models/try-on/body_{bodyType}_cloth_{category1}_{category2}.glb
+        // e.g., /models/try-on/body_slim_male_cloth_hoodie_pants.glb
+        // e.g., /models/try-on/body_slim_female_cloth_dress.glb
 
         String bodyType = avatarId.toLowerCase();
-        String garmentType = category.toLowerCase().replace("-", "_");
+
+        // Map category to match file naming convention
+        String garmentType = mapCategoryToFileName(category);
 
         return String.format("%s/body_%s_cloth_%s.glb", TRYON_MODEL_PATH, bodyType, garmentType);
+    }
+
+    /**
+     * Map category to match file naming convention
+     */
+    private String mapCategoryToFileName(String category) {
+        if (category == null) {
+            return "tshirt_pants";
+        }
+
+        switch (category.toUpperCase()) {
+            case "HOODIE":
+                return "hoodie_pants";
+            case "T-SHIRT":
+            case "T_SHIRT":
+            case "TSHIRT":
+                return "tshirt_pants";
+            case "FEMALE_TSHIRT":
+                return "female_tshirt_shorts";
+            case "SHIRT":
+                return "tshirt_pants";
+            case "JACKET":
+                return "jacket_pants";
+            case "PANTS":
+                return "tshirt_pants";
+            case "SHORTS":
+                return "tshirt_pants";
+            case "DRESS":
+                return "dress";
+            case "SKIRT":
+                return "short_skirt";
+            case "SHORT_SKIRT":
+                return "short_skirt";
+            case "CROP_TOP":
+                return "crop_top_short_skirt";
+            default:
+                return "tshirt_pants";
+        }
     }
 
     private String generateNote(String avatarId, String category, String fitType, Double fitScore) {
