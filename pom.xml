@@ -104,6 +104,12 @@
 			<artifactId>h2</artifactId>
 			<scope>runtime</scope>
 		</dependency>
+		<!-- Dotenv for loading .env file -->
+		<dependency>
+			<groupId>io.github.cdimascio</groupId>
+			<artifactId>dotenv-java</artifactId>
+			<version>3.0.2</version>
+		</dependency>
 	</dependencies>
 
 	<build>
