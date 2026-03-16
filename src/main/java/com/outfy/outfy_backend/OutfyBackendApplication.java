@@ -40,12 +40,4 @@ public class OutfyBackendApplication {
 		SpringApplication.run(OutfyBackendApplication.class, args);
 	}
 
-	private static void setSystemPropertyIfAbsent(String key, String defaultValue, Dotenv dotenv) {
-		String value = dotenv != null ? dotenv.get(key) : null;
-		if (value == null || value.equalsIgnoreCase("null") || value.isBlank()) {
-			value = defaultValue;
-		}
-		System.setProperty(key, value);
-	}
-
 }
