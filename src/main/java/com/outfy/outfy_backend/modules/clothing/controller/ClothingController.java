@@ -2,10 +2,11 @@ package com.outfy.outfy_backend.modules.clothing.controller;
 
 import com.outfy.outfy_backend.common.constant.AppConstants;
 import com.outfy.outfy_backend.common.response.ApiResponse;
+import com.outfy.outfy_backend.modules.clothing.dto.request.AnalyzeClothingRequest;
 import com.outfy.outfy_backend.modules.clothing.dto.request.CreateClothingRequest;
 import com.outfy.outfy_backend.modules.clothing.dto.response.ClothingAnalysisResult;
 import com.outfy.outfy_backend.modules.clothing.dto.response.ClothingItemResponse;
-import com.outfy.outfy_backend.modules.clothing.service.ClothingService;
+import com.outfy.outfy_backend.modules.clothing.interfaces.IClothingAnalysisService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,9 +18,9 @@ import java.util.List;
 @RequestMapping(AppConstants.API_V1 + "/clothes")
 public class ClothingController {
 
-    private final ClothingService clothingService;
+    private final IClothingAnalysisService clothingService;
 
-    public ClothingController(ClothingService clothingService) {
+    public ClothingController(IClothingAnalysisService clothingService) {
         this.clothingService = clothingService;
     }
 
@@ -54,6 +55,17 @@ public class ClothingController {
     public ResponseEntity<ApiResponse<ClothingAnalysisResult>> getAnalysisResult(@PathVariable Long id) {
         ClothingAnalysisResult result = clothingService.getAnalysisResult(id);
         return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
+    /**
+     * Analyze clothing directly from image URL (for demo without database)
+     * This is the main endpoint for the 3D cloth pipeline demo
+     */
+    @PostMapping("/analyze-direct")
+    public ResponseEntity<ApiResponse<ClothingAnalysisResult>> analyzeClothingDirect(
+            @Valid @RequestBody AnalyzeClothingRequest request) {
+        ClothingAnalysisResult result = clothingService.analyzeClothingDirect(request);
+        return ResponseEntity.ok(ApiResponse.success("Clothing analyzed successfully", result));
     }
 }
 

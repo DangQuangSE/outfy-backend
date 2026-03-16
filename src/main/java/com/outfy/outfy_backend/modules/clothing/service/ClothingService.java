@@ -2,11 +2,13 @@ package com.outfy.outfy_backend.modules.clothing.service;
 
 import com.outfy.outfy_backend.common.exception.ResourceNotFoundException;
 import com.outfy.outfy_backend.infrastructure.external.ClothingAnalysisGateway;
+import com.outfy.outfy_backend.modules.clothing.dto.request.AnalyzeClothingRequest;
 import com.outfy.outfy_backend.modules.clothing.dto.request.CreateClothingRequest;
 import com.outfy.outfy_backend.modules.clothing.dto.response.ClothingAnalysisResult;
 import com.outfy.outfy_backend.modules.clothing.dto.response.ClothingItemResponse;
 import com.outfy.outfy_backend.modules.clothing.entity.ClothingAnalysisResultEntity;
 import com.outfy.outfy_backend.modules.clothing.entity.ClothingItem;
+import com.outfy.outfy_backend.modules.clothing.interfaces.IClothingAnalysisService;
 import com.outfy.outfy_backend.modules.clothing.mapper.ClothingMapper;
 import com.outfy.outfy_backend.modules.clothing.repository.ClothingAnalysisResultRepository;
 import com.outfy.outfy_backend.modules.clothing.repository.ClothingItemRepository;
@@ -22,7 +24,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
-public class ClothingService {
+public class ClothingService implements IClothingAnalysisService {
 
     private static final Logger logger = LoggerFactory.getLogger(ClothingService.class);
 
@@ -49,9 +51,7 @@ public class ClothingService {
     public ClothingItemResponse createClothingItem(CreateClothingRequest request) {
         logger.info("Creating clothing item for user: {}", request.getUserId());
 
-        // Use mapper to convert request to entity
         ClothingItem item = clothingMapper.toEntity(request);
-        // Set default sourceType if not provided
         if (item.getSourceType() == null || item.getSourceType().isBlank()) {
             item.setSourceType("UPLOAD");
         }
@@ -81,10 +81,8 @@ public class ClothingService {
         ClothingItem item = clothingItemRepository.findById(clothingId)
                 .orElseThrow(() -> new ResourceNotFoundException("ClothingItem", "id", clothingId));
 
-        // Call gateway to analyze
         ClothingAnalysisResult result = clothingAnalysisGateway.analyze(clothingId);
 
-        // Save result
         ClothingAnalysisResultEntity entity = new ClothingAnalysisResultEntity();
         entity.setClothingItemId(clothingId);
         entity.setGarmentCategory(result.getGarmentCategory());
@@ -126,6 +124,24 @@ public class ClothingService {
         } catch (JsonProcessingException e) {
             logger.error("Error deserializing clothing attributes", e);
         }
+
+        return result;
+    }
+
+    /**
+     * Analyze clothing directly from image (for demo without database)
+     */
+    public ClothingAnalysisResult analyzeClothingDirect(AnalyzeClothingRequest request) {
+        logger.info("Analyzing clothing directly from image - url: {}, filename: {}",
+                request.getImageUrl(), request.getFileName());
+
+        ClothingAnalysisResult result = clothingAnalysisGateway.analyzeFromImage(
+                request.getImageUrl(),
+                request.getFileName()
+        );
+
+        logger.info("Analyzed clothing - category: {}, template: {}",
+                result.getGarmentCategory(), result.getTemplateCode());
 
         return result;
     }

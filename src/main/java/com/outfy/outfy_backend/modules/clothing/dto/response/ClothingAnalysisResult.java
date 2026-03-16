@@ -8,11 +8,12 @@ public class ClothingAnalysisResult {
     private Map<String, Object> attributes;
     private Map<String, Object> garmentParameters;
     private String previewUrl;
+    private double confidence;
 
     public ClothingAnalysisResult() {}
 
-    public ClothingAnalysisResult(String garmentCategory, String templateCode, 
-                                 Map<String, Object> attributes, 
+    public ClothingAnalysisResult(String garmentCategory, String templateCode,
+                                 Map<String, Object> attributes,
                                  Map<String, Object> garmentParameters,
                                  String previewUrl) {
         this.garmentCategory = garmentCategory;
@@ -20,6 +21,19 @@ public class ClothingAnalysisResult {
         this.attributes = attributes;
         this.garmentParameters = garmentParameters;
         this.previewUrl = previewUrl;
+        this.confidence = 0.85; // default
+    }
+
+    public ClothingAnalysisResult(String garmentCategory, String templateCode,
+                                 Map<String, Object> attributes,
+                                 Map<String, Object> garmentParameters,
+                                 String previewUrl, double confidence) {
+        this.garmentCategory = garmentCategory;
+        this.templateCode = templateCode;
+        this.attributes = attributes;
+        this.garmentParameters = garmentParameters;
+        this.previewUrl = previewUrl;
+        this.confidence = confidence;
     }
 
     // Getters and Setters
@@ -33,5 +47,7 @@ public class ClothingAnalysisResult {
     public void setGarmentParameters(Map<String, Object> garmentParameters) { this.garmentParameters = garmentParameters; }
     public String getPreviewUrl() { return previewUrl; }
     public void setPreviewUrl(String previewUrl) { this.previewUrl = previewUrl; }
+    public double getConfidence() { return confidence; }
+    public void setConfidence(double confidence) { this.confidence = confidence; }
 }
 
