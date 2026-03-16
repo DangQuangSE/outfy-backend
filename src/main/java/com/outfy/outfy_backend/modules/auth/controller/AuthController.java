@@ -5,6 +5,8 @@ import com.outfy.outfy_backend.common.response.ApiResponse;
 import com.outfy.outfy_backend.modules.auth.dto.request.LoginRequest;
 import com.outfy.outfy_backend.modules.auth.dto.request.RefreshTokenRequest;
 import com.outfy.outfy_backend.modules.auth.dto.request.RegisterRequest;
+import com.outfy.outfy_backend.modules.auth.dto.request.ResendVerificationEmailRequest;
+import com.outfy.outfy_backend.modules.auth.dto.request.VerifyEmailRequest;
 import com.outfy.outfy_backend.modules.auth.dto.response.AuthResponse;
 import com.outfy.outfy_backend.modules.auth.dto.response.UserResponse;
 import com.outfy.outfy_backend.modules.auth.service.AuthService;
@@ -24,11 +26,25 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse<AuthResponse>> register(
+    public ResponseEntity<ApiResponse<UserResponse>> register(
             @Valid @RequestBody RegisterRequest request) {
-        AuthResponse response = authService.register(request);
+        UserResponse response = authService.register(request);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("Registration successful", response));
+                .body(ApiResponse.success("Registration successful. Please check your email to verify your account.", response));
+    }
+
+    @PostMapping("/verify-email")
+    public ResponseEntity<ApiResponse<Void>> verifyEmail(
+            @Valid @RequestBody VerifyEmailRequest request) {
+        authService.verifyEmail(request);
+        return ResponseEntity.ok(ApiResponse.success("Email verified successfully", null));
+    }
+
+    @PostMapping("/resend-verification-email")
+    public ResponseEntity<ApiResponse<Void>> resendVerificationEmail(
+            @Valid @RequestBody ResendVerificationEmailRequest request) {
+        authService.resendVerificationEmail(request);
+        return ResponseEntity.ok(ApiResponse.success("Verification email sent successfully", null));
     }
 
     @PostMapping("/login")
