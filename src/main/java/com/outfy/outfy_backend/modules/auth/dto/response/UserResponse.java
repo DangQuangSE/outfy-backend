@@ -11,6 +11,8 @@ public class UserResponse {
     private String gender;
     private String avatarUrl;
     private String role;
+    private Boolean isEmailVerified;
+    private LocalDateTime emailVerifiedAt;
     private LocalDateTime createdAt;
 
     // Getters and Setters
@@ -30,6 +32,10 @@ public class UserResponse {
     public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
+    public Boolean getIsEmailVerified() { return isEmailVerified; }
+    public void setIsEmailVerified(Boolean isEmailVerified) { this.isEmailVerified = isEmailVerified; }
+    public LocalDateTime getEmailVerifiedAt() { return emailVerifiedAt; }
+    public void setEmailVerifiedAt(LocalDateTime emailVerifiedAt) { this.emailVerifiedAt = emailVerifiedAt; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }

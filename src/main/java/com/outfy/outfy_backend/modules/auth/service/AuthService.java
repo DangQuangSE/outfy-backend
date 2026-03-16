@@ -5,6 +5,8 @@ import com.outfy.outfy_backend.common.exception.ResourceNotFoundException;
 import com.outfy.outfy_backend.modules.auth.dto.request.LoginRequest;
 import com.outfy.outfy_backend.modules.auth.dto.request.RefreshTokenRequest;
 import com.outfy.outfy_backend.modules.auth.dto.request.RegisterRequest;
+import com.outfy.outfy_backend.modules.auth.dto.request.ResendVerificationEmailRequest;
+import com.outfy.outfy_backend.modules.auth.dto.request.VerifyEmailRequest;
 import com.outfy.outfy_backend.modules.auth.dto.response.AuthResponse;
 import com.outfy.outfy_backend.modules.auth.dto.response.UserResponse;
 import com.outfy.outfy_backend.modules.auth.entity.RefreshToken;
@@ -33,22 +35,28 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final UserMapper userMapper;
+    private final EmailService emailService;
+    private final OtpService otpService;
 
     public AuthService(
             UserRepository userRepository,
             RefreshTokenRepository refreshTokenRepository,
             PasswordEncoder passwordEncoder,
             JwtService jwtService,
-            UserMapper userMapper) {
+            UserMapper userMapper,
+            EmailService emailService,
+            OtpService otpService) {
         this.userRepository = userRepository;
         this.refreshTokenRepository = refreshTokenRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.userMapper = userMapper;
+        this.emailService = emailService;
+        this.otpService = otpService;
     }
 
     @Transactional
-    public AuthResponse register(RegisterRequest request) {
+    public UserResponse register(RegisterRequest request) {
         logger.info("Registering new user with email: {}", request.getEmail());
 
         if (userRepository.existsByEmail(request.getEmail())) {
@@ -60,11 +68,51 @@ public class AuthService {
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRole(UserRole.USER);
         user.setIsActive(true);
+        user.setIsEmailVerified(false);
 
         User saved = userRepository.save(user);
         logger.info("User registered successfully with id: {}", saved.getId());
 
-        return generateAuthResponse(saved);
+        // Generate OTP, store in cache, and send verification email
+        String otp = otpService.generateAndStoreOtp(saved.getEmail());
+        emailService.sendVerificationEmail(saved, otp);
+
+        return userMapper.toResponse(saved);
+    }
+
+    @Transactional
+    public void verifyEmail(VerifyEmailRequest request) {
+        logger.info("Verifying email with OTP for: {}", request.getEmail());
+
+        // Verify OTP from cache (throws exception if invalid/expired)
+        otpService.verifyOtp(request.getEmail(), request.getOtp());
+
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new ResourceNotFoundException("User", "email", request.getEmail()));
+
+        user.setIsEmailVerified(true);
+        user.setEmailVerifiedAt(LocalDateTime.now());
+        userRepository.save(user);
+
+        logger.info("Email verified successfully for user: {}", user.getId());
+    }
+
+    @Transactional
+    public void resendVerificationEmail(ResendVerificationEmailRequest request) {
+        logger.info("Resending verification email to: {}", request.getEmail());
+
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new BusinessRuleViolationException("User with this email not found"));
+
+        if (user.getIsEmailVerified()) {
+            throw new BusinessRuleViolationException("Email is already verified");
+        }
+
+        // Generate new OTP (overwrites old one in cache) and send email
+        String otp = otpService.generateAndStoreOtp(user.getEmail());
+        emailService.sendVerificationEmail(user, otp);
+
+        logger.info("Verification email resent to: {}", user.getEmail());
     }
 
     @Transactional
@@ -80,6 +128,10 @@ public class AuthService {
 
         if (!user.getIsActive()) {
             throw new BusinessRuleViolationException("Account is inactive");
+        }
+
+        if (!user.getIsEmailVerified()) {
+            throw new BusinessRuleViolationException("Please verify your email before logging in.");
         }
 
         logger.info("User logged in successfully: {}", user.getId());
@@ -149,4 +201,3 @@ public class AuthService {
         return response;
     }
 }
-
