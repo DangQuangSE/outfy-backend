@@ -32,6 +32,7 @@ public class OutfyBackendApplication {
 			System.setProperty("MAIL_PASSWORD", Objects.toString(dotenv.get("MAIL_PASSWORD")));
 			System.setProperty("MAIL_FROM", Objects.toString(dotenv.get("MAIL_FROM")));
 			System.setProperty("OTP_EXPIRATION_MINUTES", Objects.toString(dotenv.get("OTP_EXPIRATION_MINUTES")));
+			System.setProperty("GOOGLE_CLIENT_ID", Objects.toString(dotenv.get("GOOGLE_CLIENT_ID")));
 		}
 
 		SpringApplication.run(OutfyBackendApplication.class, args);

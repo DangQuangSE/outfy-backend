@@ -11,6 +11,7 @@ import com.outfy.outfy_backend.modules.auth.dto.response.AuthResponse;
 import com.outfy.outfy_backend.modules.auth.dto.response.UserResponse;
 import com.outfy.outfy_backend.modules.auth.entity.RefreshToken;
 import com.outfy.outfy_backend.modules.auth.entity.User;
+import com.outfy.outfy_backend.modules.auth.enums.AuthProvider;
 import com.outfy.outfy_backend.modules.auth.enums.UserRole;
 import com.outfy.outfy_backend.modules.auth.mapper.UserMapper;
 import com.outfy.outfy_backend.modules.auth.repository.RefreshTokenRepository;
@@ -130,6 +131,10 @@ public class AuthService {
             throw new BusinessRuleViolationException("Account is inactive");
         }
 
+        if (user.getAuthProvider() == AuthProvider.GOOGLE) {
+            throw new BusinessRuleViolationException("This account uses Google login. Please sign in with Google.");
+        }
+
         if (!user.getIsEmailVerified()) {
             throw new BusinessRuleViolationException("Please verify your email before logging in.");
         }
@@ -179,7 +184,7 @@ public class AuthService {
         return userMapper.toResponse(user);
     }
 
-    private AuthResponse generateAuthResponse(User user) {
+    public AuthResponse generateAuthResponse(User user) {
         String accessToken = jwtService.generateAccessToken(user);
         String refreshToken = jwtService.generateRefreshToken(user);
 

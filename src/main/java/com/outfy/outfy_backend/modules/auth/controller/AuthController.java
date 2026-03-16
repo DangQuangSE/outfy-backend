@@ -2,6 +2,7 @@ package com.outfy.outfy_backend.modules.auth.controller;
 
 import com.outfy.outfy_backend.common.constant.AppConstants;
 import com.outfy.outfy_backend.common.response.ApiResponse;
+import com.outfy.outfy_backend.modules.auth.dto.request.GoogleLoginRequest;
 import com.outfy.outfy_backend.modules.auth.dto.request.LoginRequest;
 import com.outfy.outfy_backend.modules.auth.dto.request.RefreshTokenRequest;
 import com.outfy.outfy_backend.modules.auth.dto.request.RegisterRequest;
@@ -10,6 +11,7 @@ import com.outfy.outfy_backend.modules.auth.dto.request.VerifyEmailRequest;
 import com.outfy.outfy_backend.modules.auth.dto.response.AuthResponse;
 import com.outfy.outfy_backend.modules.auth.dto.response.UserResponse;
 import com.outfy.outfy_backend.modules.auth.service.AuthService;
+import com.outfy.outfy_backend.modules.auth.service.GoogleAuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,9 +24,11 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+    private final GoogleAuthService googleAuthService;
 
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService, GoogleAuthService googleAuthService) {
         this.authService = authService;
+        this.googleAuthService = googleAuthService;
     }
 
     @PostMapping("/register")
@@ -54,6 +58,13 @@ public class AuthController {
             @Valid @RequestBody LoginRequest request) {
         AuthResponse response = authService.login(request);
         return ResponseEntity.ok(ApiResponse.success("Login successful", response));
+    }
+
+    @PostMapping("/google")
+    public ResponseEntity<ApiResponse<AuthResponse>> googleLogin(
+            @Valid @RequestBody GoogleLoginRequest request) {
+        AuthResponse response = googleAuthService.googleLogin(request.getIdToken());
+        return ResponseEntity.ok(ApiResponse.success("Google login successful", response));
     }
 
     @PostMapping("/refresh")

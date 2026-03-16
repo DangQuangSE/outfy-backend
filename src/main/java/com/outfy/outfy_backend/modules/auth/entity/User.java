@@ -1,5 +1,6 @@
 package com.outfy.outfy_backend.modules.auth.entity;
 
+import com.outfy.outfy_backend.modules.auth.enums.AuthProvider;
 import com.outfy.outfy_backend.modules.auth.enums.UserRole;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
@@ -15,7 +16,7 @@ public class User {
     @Column(unique = true, nullable = false)
     private String email;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String password;
 
     @Column(name = "full_name")
@@ -36,6 +37,13 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private UserRole role = UserRole.USER;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "auth_provider", nullable = false)
+    private AuthProvider authProvider = AuthProvider.LOCAL;
+
+    @Column(name = "google_id", unique = true)
+    private String googleId;
 
     @Column(nullable = false)
     private Boolean isActive = true;
@@ -58,6 +66,9 @@ public class User {
         updatedAt = LocalDateTime.now();
         if (role == null) {
             role = UserRole.USER;
+        }
+        if (authProvider == null) {
+            authProvider = AuthProvider.LOCAL;
         }
         if (isActive == null) {
             isActive = true;
@@ -91,6 +102,10 @@ public class User {
     public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
     public UserRole getRole() { return role; }
     public void setRole(UserRole role) { this.role = role; }
+    public AuthProvider getAuthProvider() { return authProvider; }
+    public void setAuthProvider(AuthProvider authProvider) { this.authProvider = authProvider; }
+    public String getGoogleId() { return googleId; }
+    public void setGoogleId(String googleId) { this.googleId = googleId; }
     public Boolean getIsActive() { return isActive; }
     public void setIsActive(Boolean isActive) { this.isActive = isActive; }
     public Boolean getIsEmailVerified() { return isEmailVerified; }
