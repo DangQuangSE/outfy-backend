@@ -5,12 +5,16 @@ import com.outfy.outfy_backend.common.response.ApiResponse;
 import com.outfy.outfy_backend.modules.auth.dto.request.LoginRequest;
 import com.outfy.outfy_backend.modules.auth.dto.request.RefreshTokenRequest;
 import com.outfy.outfy_backend.modules.auth.dto.request.RegisterRequest;
+import com.outfy.outfy_backend.modules.auth.dto.request.ResendVerificationEmailRequest;
+import com.outfy.outfy_backend.modules.auth.dto.request.VerifyEmailRequest;
 import com.outfy.outfy_backend.modules.auth.dto.response.AuthResponse;
 import com.outfy.outfy_backend.modules.auth.dto.response.UserResponse;
 import com.outfy.outfy_backend.modules.auth.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -24,11 +28,25 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse<AuthResponse>> register(
+    public ResponseEntity<ApiResponse<UserResponse>> register(
             @Valid @RequestBody RegisterRequest request) {
-        AuthResponse response = authService.register(request);
+        UserResponse response = authService.register(request);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("Registration successful", response));
+                .body(ApiResponse.success("Registration successful. Please check your email to verify your account.", response));
+    }
+
+    @PostMapping("/verify-email")
+    public ResponseEntity<ApiResponse<Void>> verifyEmail(
+            @Valid @RequestBody VerifyEmailRequest request) {
+        authService.verifyEmail(request);
+        return ResponseEntity.ok(ApiResponse.success("Email verified successfully", null));
+    }
+
+    @PostMapping("/resend-verification-email")
+    public ResponseEntity<ApiResponse<Void>> resendVerificationEmail(
+            @Valid @RequestBody ResendVerificationEmailRequest request) {
+        authService.resendVerificationEmail(request);
+        return ResponseEntity.ok(ApiResponse.success("Verification email sent successfully", null));
     }
 
     @PostMapping("/login")
@@ -46,19 +64,21 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<ApiResponse<Void>> logout(@RequestHeader("Authorization") String authHeader) {
-        // Extract user ID from token - for now we'll assume the user ID is available
-        // In a real implementation, this would be extracted from the JWT
-        // This is a placeholder - actual implementation would need to parse the token
+    public ResponseEntity<ApiResponse<Void>> logout() {
+        Long userId = getCurrentUserId();
+        authService.logout(userId);
         return ResponseEntity.ok(ApiResponse.success("Logout successful", null));
     }
 
     @GetMapping("/me")
-    public ResponseEntity<ApiResponse<UserResponse>> getCurrentUser(
-            @RequestHeader("Authorization") String authHeader) {
-        // This would extract user ID from token and get user details
-        // Placeholder implementation
-        return ResponseEntity.ok(ApiResponse.success(null));
+    public ResponseEntity<ApiResponse<UserResponse>> getCurrentUser() {
+        Long userId = getCurrentUserId();
+        UserResponse response = authService.getUserById(userId);
+        return ResponseEntity.ok(ApiResponse.success("User retrieved successfully", response));
+    }
+
+    private Long getCurrentUserId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return (Long) authentication.getPrincipal();
     }
 }
-
