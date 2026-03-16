@@ -1,12 +1,14 @@
 package com.outfy.outfy_backend.modules.bodyprofile.service;
 
 import com.outfy.outfy_backend.common.exception.ResourceNotFoundException;
-import com.outfy.outfy_backend.infrastructure.external.BodyGenerationGateway;
+import com.outfy.outfy_backend.infrastructure.external.IBodyGenerationGateway;
 import com.outfy.outfy_backend.modules.bodyprofile.dto.request.CreateBodyProfileRequest;
+import com.outfy.outfy_backend.modules.bodyprofile.dto.request.GenerateAvatarRequest;
 import com.outfy.outfy_backend.modules.bodyprofile.dto.response.BodyGenerationResult;
 import com.outfy.outfy_backend.modules.bodyprofile.dto.response.BodyProfileResponse;
 import com.outfy.outfy_backend.modules.bodyprofile.entity.BodyGenerationResultEntity;
 import com.outfy.outfy_backend.modules.bodyprofile.entity.BodyProfile;
+import com.outfy.outfy_backend.modules.bodyprofile.interfaces.IBodyProfileService;
 import com.outfy.outfy_backend.modules.bodyprofile.mapper.BodyProfileMapper;
 import com.outfy.outfy_backend.modules.bodyprofile.repository.BodyGenerationResultRepository;
 import com.outfy.outfy_backend.modules.bodyprofile.repository.BodyProfileRepository;
@@ -22,20 +24,20 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
-public class BodyProfileService {
+public class BodyProfileService implements IBodyProfileService {
 
     private static final Logger logger = LoggerFactory.getLogger(BodyProfileService.class);
 
     private final BodyProfileRepository bodyProfileRepository;
     private final BodyGenerationResultRepository bodyGenerationResultRepository;
-    private final BodyGenerationGateway bodyGenerationGateway;
+    private final IBodyGenerationGateway bodyGenerationGateway;
     private final ObjectMapper objectMapper;
     private final BodyProfileMapper bodyProfileMapper;
 
     public BodyProfileService(
             BodyProfileRepository bodyProfileRepository,
             BodyGenerationResultRepository bodyGenerationResultRepository,
-            BodyGenerationGateway bodyGenerationGateway,
+            IBodyGenerationGateway bodyGenerationGateway,
             ObjectMapper objectMapper,
             BodyProfileMapper bodyProfileMapper) {
         this.bodyProfileRepository = bodyProfileRepository;
@@ -86,6 +88,7 @@ public class BodyProfileService {
         entity.setBodyType(result.getBodyType());
         entity.setAvatarPresetCode(result.getAvatarPresetCode());
         entity.setPreviewUrl(result.getPreviewUrl());
+        entity.setModelUrl(result.getModelUrl());
         entity.setConfidence(result.getConfidence());
 
         try {
@@ -109,6 +112,7 @@ public class BodyProfileService {
         result.setBodyType(entity.getBodyType());
         result.setAvatarPresetCode(entity.getAvatarPresetCode());
         result.setPreviewUrl(entity.getPreviewUrl());
+        result.setModelUrl(entity.getModelUrl());
         result.setConfidence(entity.getConfidence());
 
         try {
@@ -120,6 +124,31 @@ public class BodyProfileService {
         } catch (JsonProcessingException e) {
             logger.error("Error deserializing shape params", e);
         }
+
+        return result;
+    }
+
+    /**
+     * Generate avatar directly from measurements (for demo without database)
+     */
+    public BodyGenerationResult generateAvatarDirect(GenerateAvatarRequest request) {
+        logger.info("Generating avatar directly from measurements - gender: {}, height: {}, weight: {}",
+                request.getGender(), request.getHeightCm(), request.getWeightKg());
+
+        // Call gateway to generate avatar from measurements
+        BodyGenerationResult result = bodyGenerationGateway.generateFromMeasurements(
+                request.getGender(),
+                request.getHeightCm(),
+                request.getWeightKg(),
+                request.getChestCm(),
+                request.getWaistCm(),
+                request.getHipCm(),
+                request.getShoulderCm(),
+                request.getInseamCm()
+        );
+
+        logger.info("Generated avatar - bodyType: {}, preset: {}, modelUrl: {}",
+                result.getBodyType(), result.getAvatarPresetCode(), result.getModelUrl());
 
         return result;
     }

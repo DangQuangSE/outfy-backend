@@ -26,6 +26,9 @@ public class BodyGenerationResultEntity {
     @Column(name = "preview_url")
     private String previewUrl;
 
+    @Column(name = "model_url")
+    private String modelUrl;
+
     @Column
     private Double confidence;
 
@@ -50,6 +53,8 @@ public class BodyGenerationResultEntity {
     public void setShapeParamsJson(String shapeParamsJson) { this.shapeParamsJson = shapeParamsJson; }
     public String getPreviewUrl() { return previewUrl; }
     public void setPreviewUrl(String previewUrl) { this.previewUrl = previewUrl; }
+    public String getModelUrl() { return modelUrl; }
+    public void setModelUrl(String modelUrl) { this.modelUrl = modelUrl; }
     public Double getConfidence() { return confidence; }
     public void setConfidence(Double confidence) { this.confidence = confidence; }
     public LocalDateTime getCreatedAt() { return createdAt; }

@@ -159,9 +159,10 @@ modules/bodyprofile
 │   ├── request
 │   └── response
 ├── entity
+├── interfaces          # Interface for Service (e.g., IBodyProfileService)
 ├── mapper
 ├── repository
-├── service
+├── service            # Service implementation (implements interface)
 ├── gateway
 └── enums
 ```
@@ -205,6 +206,42 @@ Services are responsible for:
 - maintaining domain behavior.
 
 Services should be the primary place for business decisions.
+
+### 5.2.1 Interface Naming Convention
+
+All interfaces must follow the naming convention with **"I" prefix**:
+
+- Service interfaces: `IServiceName` (e.g., `IBodyProfileService`)
+- Gateway interfaces: `IGatewayName` (e.g., `IBodyGenerationGateway`)
+
+### 5.2.2 Interface Location
+
+- Service interfaces: `modules/<module>/interfaces/IServiceName.java`
+- Gateway interfaces: `infrastructure/external/IGatewayName.java`
+
+### 5.2.3 Dependency Flow
+
+```
+Controller → IService (interface)
+                ↓
+        Service Implementation (implements IService)
+                ↓
+        IGateway (interface)
+                ↓
+        Gateway Implementation (implements IGateway)
+```
+
+**Important:** Controller must inject interface, not concrete implementation.
+
+Example:
+
+```java
+// ❌ Wrong: Inject concrete class
+private final BodyProfileService bodyProfileService;
+
+// ✅ Correct: Inject interface
+private final IBodyProfileService bodyProfileService;
+```
 
 ## 5.3 Repository Layer
 
@@ -830,14 +867,16 @@ modules/bodyprofile
 │       └── BodyProfileResponse.java
 ├── entity
 │   └── BodyProfile.java
+├── interfaces         # Interface for Service
+│   └── IBodyProfileService.java
 ├── mapper
 │   └── BodyProfileMapper.java
 ├── repository
 │   └── BodyProfileRepository.java
-├── service
+├── service            # Service implementation
 │   └── BodyProfileService.java
 ├── gateway
-│   ├── BodyGenerationGateway.java
+│   ├── IBodyGenerationGateway.java
 │   └── MockBodyGenerationGateway.java
 └── enums
 ```
