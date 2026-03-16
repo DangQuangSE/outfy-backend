@@ -7,6 +7,14 @@ public class TryOnSessionResponse {
     private Long userId;
     private Long bodyProfileId;
     private Long clothingItemId;
+    private Long wardrobeItemId;
+    private String avatarId;
+    private String avatarUrl;
+    private String garmentModelUrl;
+    private String garmentCategory;
+    private String fitType;
+    private String sleeveLength;
+    private String garmentColor;
     private String status;
     private String requestedSize;
     private LocalDateTime createdAt;
@@ -21,6 +29,22 @@ public class TryOnSessionResponse {
     public void setBodyProfileId(Long bodyProfileId) { this.bodyProfileId = bodyProfileId; }
     public Long getClothingItemId() { return clothingItemId; }
     public void setClothingItemId(Long clothingItemId) { this.clothingItemId = clothingItemId; }
+    public Long getWardrobeItemId() { return wardrobeItemId; }
+    public void setWardrobeItemId(Long wardrobeItemId) { this.wardrobeItemId = wardrobeItemId; }
+    public String getAvatarId() { return avatarId; }
+    public void setAvatarId(String avatarId) { this.avatarId = avatarId; }
+    public String getAvatarUrl() { return avatarUrl; }
+    public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
+    public String getGarmentModelUrl() { return garmentModelUrl; }
+    public void setGarmentModelUrl(String garmentModelUrl) { this.garmentModelUrl = garmentModelUrl; }
+    public String getGarmentCategory() { return garmentCategory; }
+    public void setGarmentCategory(String garmentCategory) { this.garmentCategory = garmentCategory; }
+    public String getFitType() { return fitType; }
+    public void setFitType(String fitType) { this.fitType = fitType; }
+    public String getSleeveLength() { return sleeveLength; }
+    public void setSleeveLength(String sleeveLength) { this.sleeveLength = sleeveLength; }
+    public String getGarmentColor() { return garmentColor; }
+    public void setGarmentColor(String garmentColor) { this.garmentColor = garmentColor; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
     public String getRequestedSize() { return requestedSize; }
