@@ -116,6 +116,46 @@ public class WardrobeService {
         logger.info("Deleted wardrobe item with id: {}", id);
     }
 
+    /**
+     * Add analyzed clothing item to wardrobe
+     */
+    @Transactional
+    public WardrobeItemResponse addToWardrobe(Long clothingItemId, Long userId, String season, String notes) {
+        logger.info("Adding clothing item {} to wardrobe for user {}", clothingItemId, userId);
+
+        // Verify clothing item exists
+        ClothingItem clothingItem = clothingItemRepository.findById(clothingItemId)
+                .orElseThrow(() -> new ResourceNotFoundException("ClothingItem", "id", clothingItemId));
+
+        // Verify ownership
+        if (!clothingItem.getUserId().equals(userId)) {
+            throw new IllegalArgumentException("Clothing item does not belong to user");
+        }
+
+        // Check if already in wardrobe (has clothingItemId)
+        boolean alreadyExists = wardrobeItemRepository.findByUserId(userId).stream()
+                .anyMatch(item -> clothingItemId.equals(item.getClothingItemId()));
+
+        if (alreadyExists) {
+            throw new IllegalStateException("Clothing item already in wardrobe");
+        }
+
+        // Create wardrobe item
+        WardrobeItem wardrobeItem = new WardrobeItem();
+        wardrobeItem.setUserId(userId);
+        wardrobeItem.setClothingItemId(clothingItemId);
+        wardrobeItem.setCategory(clothingItem.getGarmentCategory());
+        wardrobeItem.setColor(clothingItem.getColor());
+        wardrobeItem.setSeason(season);
+        wardrobeItem.setNotes(notes);
+        wardrobeItem.setIsFavorite(false);
+
+        WardrobeItem saved = wardrobeItemRepository.save(wardrobeItem);
+        logger.info("Added clothing item {} to wardrobe with id {}", clothingItemId, saved.getId());
+
+        return toResponseWithImageUrl(saved);
+    }
+
     private WardrobeItemResponse toResponseWithImageUrl(WardrobeItem item) {
         // Use mapper for basic mapping
         WardrobeItemResponse response = wardrobeMapper.toResponse(item);

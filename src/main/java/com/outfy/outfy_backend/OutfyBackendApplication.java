@@ -4,9 +4,11 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.annotation.PropertySources;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import io.github.cdimascio.dotenv.Dotenv;
 
 @SpringBootApplication
+@EnableScheduling
 @PropertySources({
 		@PropertySource("classpath:application.properties"),
 		@PropertySource(value = "file:.env", ignoreResourceNotFound = true)

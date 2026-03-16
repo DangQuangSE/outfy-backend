@@ -166,6 +166,7 @@ public class MockClothingAnalysisGateway implements ClothingAnalysisGateway {
                 category, templateCode, confidence);
 
         return new ClothingAnalysisResult(
+                null,
                 category.name(),
                 templateCode,
                 attributes,
@@ -178,6 +179,7 @@ public class MockClothingAnalysisGateway implements ClothingAnalysisGateway {
     private ClothingAnalysisResult createDefaultResult() {
         GarmentCategory category = GarmentCategory.HOODIE;
         return new ClothingAnalysisResult(
+                null,
                 category.name(),
                 category.getTemplateCode(),
                 new HashMap<>(DEFAULT_ATTRIBUTES.get(category)),

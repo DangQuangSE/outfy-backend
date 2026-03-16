@@ -3,6 +3,7 @@ package com.outfy.outfy_backend.modules.clothing.controller;
 import com.outfy.outfy_backend.common.constant.AppConstants;
 import com.outfy.outfy_backend.common.response.ApiResponse;
 import com.outfy.outfy_backend.modules.clothing.dto.request.AnalyzeClothingRequest;
+import com.outfy.outfy_backend.modules.clothing.dto.request.ConfirmClothingRequest;
 import com.outfy.outfy_backend.modules.clothing.dto.request.CreateClothingRequest;
 import com.outfy.outfy_backend.modules.clothing.dto.response.ClothingAnalysisResult;
 import com.outfy.outfy_backend.modules.clothing.dto.response.ClothingItemResponse;
@@ -45,10 +46,26 @@ public class ClothingController {
         return ResponseEntity.ok(ApiResponse.success(responses));
     }
 
+    /**
+     * Get wardrobe items (only CONFIRMED items)
+     */
+    @GetMapping("/user/{userId}/wardrobe")
+    public ResponseEntity<ApiResponse<List<ClothingItemResponse>>> getWardrobeItems(
+            @PathVariable Long userId) {
+        List<ClothingItemResponse> responses = clothingService.getWardrobeItems(userId);
+        return ResponseEntity.ok(ApiResponse.success(responses));
+    }
+
     @PostMapping("/{id}/analyze")
     public ResponseEntity<ApiResponse<ClothingAnalysisResult>> analyzeClothing(@PathVariable Long id) {
         ClothingAnalysisResult result = clothingService.analyzeClothing(id);
         return ResponseEntity.ok(ApiResponse.success("Clothing analyzed successfully", result));
+    }
+
+    @PostMapping("/{id}/reanalyze")
+    public ResponseEntity<ApiResponse<ClothingAnalysisResult>> reAnalyzeClothing(@PathVariable Long id) {
+        ClothingAnalysisResult result = clothingService.reAnalyzeClothing(id);
+        return ResponseEntity.ok(ApiResponse.success("Clothing re-analyzed successfully", result));
     }
 
     @GetMapping("/{id}/analysis")
@@ -58,8 +75,30 @@ public class ClothingController {
     }
 
     /**
+     * Confirm clothing item to add to wardrobe
+     */
+    @PostMapping("/{id}/confirm")
+    public ResponseEntity<ApiResponse<ClothingItemResponse>> confirmClothingItem(
+            @PathVariable Long id,
+            @RequestBody ConfirmClothingRequest request) {
+        ClothingItemResponse response = clothingService.confirmClothingItem(id, request);
+        return ResponseEntity.ok(ApiResponse.success("Clothing item confirmed and added to wardrobe", response));
+    }
+
+    /**
+     * Delete a clothing item (only DRAFT or FAILED status)
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteClothingItem(
+            @PathVariable Long id,
+            @RequestParam Long userId) {
+        clothingService.deleteClothingItem(id, userId);
+        return ResponseEntity.ok(ApiResponse.success("Clothing item deleted successfully", null));
+    }
+
+    /**
      * Analyze clothing directly from image URL (for demo without database)
-     * This is the main endpoint for the 3D cloth pipeline demo
+     * Returns ClothingAnalysisResult with clothingItemId to add to wardrobe later
      */
     @PostMapping("/analyze-direct")
     public ResponseEntity<ApiResponse<ClothingAnalysisResult>> analyzeClothingDirect(

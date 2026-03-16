@@ -82,5 +82,19 @@ public class WardrobeController {
         wardrobeService.deleteWardrobeItem(id);
         return ResponseEntity.ok(ApiResponse.success("Wardrobe item deleted successfully", null));
     }
+
+    /**
+     * Add analyzed clothing item to wardrobe
+     */
+    @PostMapping("/from-clothing")
+    public ResponseEntity<ApiResponse<WardrobeItemResponse>> addFromClothing(
+            @RequestParam Long clothingItemId,
+            @RequestParam Long userId,
+            @RequestParam(required = false) String season,
+            @RequestParam(required = false) String notes) {
+        WardrobeItemResponse response = wardrobeService.addToWardrobe(clothingItemId, userId, season, notes);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Added to wardrobe successfully", response));
+    }
 }
 
