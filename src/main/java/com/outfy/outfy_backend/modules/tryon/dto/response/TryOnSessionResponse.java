@@ -1,12 +1,20 @@
 package com.outfy.outfy_backend.modules.tryon.dto.response;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class TryOnSessionResponse {
     private Long id;
     private Long userId;
     private Long bodyProfileId;
+
+    // Single clothing item (legacy support)
     private Long clothingItemId;
+
+    // Multiple clothing items (new)
+    private List<Long> clothingItemIds;
+    private List<String> garmentCategories;
+
     private Long wardrobeItemId;
     private String avatarId;
     private String avatarUrl;
@@ -29,6 +37,10 @@ public class TryOnSessionResponse {
     public void setBodyProfileId(Long bodyProfileId) { this.bodyProfileId = bodyProfileId; }
     public Long getClothingItemId() { return clothingItemId; }
     public void setClothingItemId(Long clothingItemId) { this.clothingItemId = clothingItemId; }
+    public List<Long> getClothingItemIds() { return clothingItemIds; }
+    public void setClothingItemIds(List<Long> clothingItemIds) { this.clothingItemIds = clothingItemIds; }
+    public List<String> getGarmentCategories() { return garmentCategories; }
+    public void setGarmentCategories(List<String> garmentCategories) { this.garmentCategories = garmentCategories; }
     public Long getWardrobeItemId() { return wardrobeItemId; }
     public void setWardrobeItemId(Long wardrobeItemId) { this.wardrobeItemId = wardrobeItemId; }
     public String getAvatarId() { return avatarId; }

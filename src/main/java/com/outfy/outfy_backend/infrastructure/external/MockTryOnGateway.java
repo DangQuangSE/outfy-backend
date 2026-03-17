@@ -5,9 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
@@ -102,19 +100,39 @@ public class MockTryOnGateway implements TryOnGateway {
     }
 
     @Override
-    public TryOnResult generate(String avatarId, Long clothingItemId, String size, String fitType) {
-        logger.info("Mock try-on generation for avatarId: {}, clothingItemId: {}, size: {}, fitType: {}",
-                avatarId, clothingItemId, size, fitType);
+    public TryOnResult generate(String avatarId, List<Long> clothingItemIds, String size, String fitType) {
+        logger.info("Mock try-on generation for avatarId: {}, clothingItemIds: {}, size: {}, fitType: {}",
+                avatarId, clothingItemIds, size, fitType);
 
         // Normalize avatar ID to match body template naming
         String normalizedAvatarId = normalizeAvatarId(avatarId);
 
-        // Get clothing category from cache (or default)
-        String category = clothingCategoryCache.getOrDefault(clothingItemId, "T-SHIRT");
-        String garmentColor = clothingColorCache.getOrDefault(clothingItemId, "gray");
+        // Get clothing categories and colors from all items
+        List<String> categories = new ArrayList<>();
+        List<String> colors = new ArrayList<>();
 
-        // Get garment model URL (without extension - user will add .glb or .png as needed)
-        String garmentModelUrl = GARMENT_TEMPLATES.getOrDefault(category, "/models/cloth/tshirt_template");
+        if (clothingItemIds != null && !clothingItemIds.isEmpty()) {
+            for (Long itemId : clothingItemIds) {
+                String category = clothingCategoryCache.getOrDefault(itemId, "T-SHIRT");
+                String color = clothingColorCache.getOrDefault(itemId, "gray");
+                categories.add(category);
+                colors.add(color);
+            }
+        } else {
+            // Default fallback
+            categories.add("T-SHIRT");
+            colors.add("gray");
+        }
+
+        // Get primary category for template (first item)
+        String primaryCategory = categories.get(0);
+
+        // Get garment model URLs for all items
+        List<String> garmentModelUrls = new ArrayList<>();
+        for (String category : categories) {
+            String templateUrl = GARMENT_TEMPLATES.getOrDefault(category, "/models/cloth/tshirt_template");
+            garmentModelUrls.add(templateUrl + ".glb");
+        }
 
         // Get body model URL
         String bodyModelUrl = BODY_TEMPLATES.getOrDefault(normalizedAvatarId, "/models/body/regular_male");
@@ -122,12 +140,12 @@ public class MockTryOnGateway implements TryOnGateway {
         // Generate fit score based on avatar and fit type
         Double fitScore = calculateFitScore(normalizedAvatarId, fitType);
 
-        // Generate preview URL - matching user's naming convention
-        // User will create: {bodyType}_{garmentCategory}.png in /models/tryon/
-        String previewUrl = generatePreviewUrl(normalizedAvatarId, category);
+        // Generate preview URL - matching user's naming convention for multiple items
+        // Format: body_{bodyType}_cloth_{category1}_{category2}.glb
+        String previewUrl = generatePreviewUrl(normalizedAvatarId, categories);
 
         // Generate note
-        String note = generateNote(normalizedAvatarId, category, fitType, fitScore);
+        String note = generateNote(normalizedAvatarId, categories, fitType, fitScore);
 
         // Applied parameters
         Map<String, Object> appliedParams = new HashMap<>();
@@ -136,9 +154,13 @@ public class MockTryOnGateway implements TryOnGateway {
         appliedParams.put("offsetY", 0);
         appliedParams.put("size", size != null ? size : "M");
         appliedParams.put("fitType", fitType != null ? fitType : "regular");
-        appliedParams.put("garmentModelUrl", garmentModelUrl + ".glb");
-        appliedParams.put("garmentCategory", category);
-        appliedParams.put("garmentColor", garmentColor);
+
+        // Multiple clothing items info
+        appliedParams.put("clothingItemIds", clothingItemIds);
+        appliedParams.put("garmentCategories", categories);
+        appliedParams.put("garmentColors", colors);
+        appliedParams.put("garmentModelUrls", garmentModelUrls);
+        appliedParams.put("primaryCategory", primaryCategory);
         appliedParams.put("bodyModelUrl", bodyModelUrl + ".glb");
         appliedParams.put("bodyType", normalizedAvatarId);
 
@@ -148,7 +170,8 @@ public class MockTryOnGateway implements TryOnGateway {
         result.setNote(note);
         result.setAppliedParams(appliedParams);
 
-        logger.info("Generated mock try-on result: previewUrl={}, fitScore={}", previewUrl, fitScore);
+        logger.info("Generated mock try-on result: previewUrl={}, fitScore={}, categories={}",
+                previewUrl, fitScore, categories);
 
         return result;
     }
@@ -213,7 +236,7 @@ public class MockTryOnGateway implements TryOnGateway {
         return Math.round(baseScore * 100.0) / 100.0;
     }
 
-    private String generatePreviewUrl(String avatarId, String category) {
+    private String generatePreviewUrl(String avatarId, List<String> categories) {
         // Generate try-on model URL matching user's file naming convention
         // User creates: /models/try-on/body_{bodyType}_cloth_{category1}_{category2}.glb
         // e.g., /models/try-on/body_slim_male_cloth_hoodie_pants.glb
@@ -221,14 +244,20 @@ public class MockTryOnGateway implements TryOnGateway {
 
         String bodyType = avatarId.toLowerCase();
 
-        // Map category to match file naming convention
-        String garmentType = mapCategoryToFileName(category);
+        // Map multiple categories to file name parts
+        List<String> garmentTypes = new ArrayList<>();
+        for (String category : categories) {
+            garmentTypes.add(mapCategoryToFileName(category));
+        }
 
-        return String.format("%s/body_%s_cloth_%s.glb", TRYON_MODEL_PATH, bodyType, garmentType);
+        // Join all garment types with underscore
+        String garmentTypeStr = String.join("_", garmentTypes);
+
+        return String.format("%s/body_%s_cloth_%s.glb", TRYON_MODEL_PATH, bodyType, garmentTypeStr);
     }
 
     /**
-     * Map category to match file naming convention
+     * Map category to match file naming convention (single category)
      */
     private String mapCategoryToFileName(String category) {
         if (category == null) {
@@ -265,22 +294,34 @@ public class MockTryOnGateway implements TryOnGateway {
         }
     }
 
-    private String generateNote(String avatarId, String category, String fitType, Double fitScore) {
+    private String generateNote(String avatarId, List<String> categories, String fitType, Double fitScore) {
         String avatarDesc = AVATAR_PRESETS.getOrDefault(avatarId, "custom avatar");
         String fitDesc = fitType != null ? fitType : "regular";
 
+        // Build clothing description from all categories
+        String clothingDesc;
+        if (categories.size() == 1) {
+            clothingDesc = categories.get(0).toLowerCase().replace("-", " ");
+        } else {
+            List<String> lowerCategories = new ArrayList<>();
+            for (String cat : categories) {
+                lowerCategories.add(cat.toLowerCase().replace("-", " "));
+            }
+            clothingDesc = String.join(" and ", lowerCategories);
+        }
+
         if (fitScore >= 0.9) {
             return String.format("Excellent fit! The %s looks perfect on %s with %s fit.",
-                    category.toLowerCase().replace("-", " "), avatarDesc, fitDesc);
+                    clothingDesc, avatarDesc, fitDesc);
         } else if (fitScore >= 0.8) {
             return String.format("Good fit! The %s fits well on %s.",
-                    category.toLowerCase().replace("-", " "), avatarDesc);
+                    clothingDesc, avatarDesc);
         } else if (fitScore >= 0.7) {
             return String.format("The %s has a %s fit on %s. Consider trying a different size.",
-                    category.toLowerCase().replace("-", " "), fitDesc, avatarDesc);
+                    clothingDesc, fitDesc, avatarDesc);
         } else {
             return String.format("The %s may not be the best fit for %s. Try a different style or size.",
-                    category.toLowerCase().replace("-", " "), avatarDesc);
+                    clothingDesc, avatarDesc);
         }
     }
 

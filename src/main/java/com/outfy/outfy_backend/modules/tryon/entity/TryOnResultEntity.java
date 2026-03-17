@@ -35,6 +35,10 @@ public class TryOnResultEntity {
     @Column(name = "garment_category")
     private String garmentCategory;
 
+    // Multiple garment categories (store as JSON)
+    @Column(name = "garment_categories", columnDefinition = "TEXT")
+    private String garmentCategoriesJson;
+
     @Column(name = "garment_color")
     private String garmentColor;
 
@@ -71,6 +75,8 @@ public class TryOnResultEntity {
     public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
     public String getGarmentCategory() { return garmentCategory; }
     public void setGarmentCategory(String garmentCategory) { this.garmentCategory = garmentCategory; }
+    public String getGarmentCategoriesJson() { return garmentCategoriesJson; }
+    public void setGarmentCategoriesJson(String garmentCategoriesJson) { this.garmentCategoriesJson = garmentCategoriesJson; }
     public String getGarmentColor() { return garmentColor; }
     public void setGarmentColor(String garmentColor) { this.garmentColor = garmentColor; }
     public Boolean getIsFavorite() { return isFavorite; }

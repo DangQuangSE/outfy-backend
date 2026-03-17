@@ -1,6 +1,7 @@
 package com.outfy.outfy_backend.modules.tryon.dto.response;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 public class TryOnResultResponse {
@@ -13,8 +14,15 @@ public class TryOnResultResponse {
     private Map<String, Object> appliedParams;
     private String avatarId;
     private String avatarUrl;
+
+    // Single item (legacy support)
     private String garmentCategory;
     private String garmentColor;
+
+    // Multiple items (new)
+    private List<String> garmentCategories;
+    private List<String> garmentColors;
+
     private Boolean isFavorite;
     private LocalDateTime createdAt;
 
@@ -39,6 +47,10 @@ public class TryOnResultResponse {
     public void setGarmentCategory(String garmentCategory) { this.garmentCategory = garmentCategory; }
     public String getGarmentColor() { return garmentColor; }
     public void setGarmentColor(String garmentColor) { this.garmentColor = garmentColor; }
+    public List<String> getGarmentCategories() { return garmentCategories; }
+    public void setGarmentCategories(List<String> garmentCategories) { this.garmentCategories = garmentCategories; }
+    public List<String> getGarmentColors() { return garmentColors; }
+    public void setGarmentColors(List<String> garmentColors) { this.garmentColors = garmentColors; }
     public Boolean getIsFavorite() { return isFavorite; }
     public void setIsFavorite(Boolean isFavorite) { this.isFavorite = isFavorite; }
     public LocalDateTime getCreatedAt() { return createdAt; }

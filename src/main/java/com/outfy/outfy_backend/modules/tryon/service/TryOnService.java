@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -56,7 +57,7 @@ public class TryOnService {
     @Transactional
     public TryOnSessionResponse createTryOnSession(CreateTryOnSessionRequest request) {
         logger.info("Creating try-on session for user: {}, bodyProfile: {}, clothing: {}",
-                request.getUserId(), request.getBodyProfileId(), request.getClothingItemId());
+                request.getUserId(), request.getBodyProfileId(), request.getClothingItemIds());
 
         // Use mapper to convert request to entity
         TryOnSession session = tryOnMapper.toEntity(request);
@@ -67,10 +68,22 @@ public class TryOnService {
             session.setAvatarId("avatar_" + request.getBodyProfileId());
         }
 
+        // Store clothing item IDs as JSON
+        try {
+            String clothingItemIdsJson = objectMapper.writeValueAsString(request.getClothingItemIds());
+            session.setClothingItemIdsJson(clothingItemIdsJson);
+        } catch (JsonProcessingException e) {
+            logger.error("Error serializing clothing item IDs", e);
+        }
+
         TryOnSession saved = tryOnSessionRepository.save(session);
         logger.info("Created try-on session with id: {}", saved.getId());
 
-        return tryOnMapper.toResponse(saved);
+        // Build response with clothing item IDs
+        TryOnSessionResponse response = tryOnMapper.toResponse(saved);
+        response.setClothingItemIds(request.getClothingItemIds());
+
+        return response;
     }
 
     @Transactional
@@ -136,8 +149,30 @@ public class TryOnService {
             avatarId = "regular"; // default avatar
         }
 
-        // Call gateway to generate try-on result
-        TryOnResult result = tryOnGateway.generate(avatarId, session.getClothingItemId(),
+        // Call gateway to generate try-on result with multiple clothing items
+        List<Long> clothingItemIds = new ArrayList<>();
+
+        // Try to get from JSON first, fallback to single item
+        if (session.getClothingItemIdsJson() != null && !session.getClothingItemIdsJson().isEmpty()) {
+            try {
+                @SuppressWarnings("unchecked")
+                List<Long> ids = objectMapper.readValue(session.getClothingItemIdsJson(), List.class);
+                clothingItemIds = ids.stream()
+                        .map(Number::longValue)
+                        .collect(Collectors.toList());
+            } catch (JsonProcessingException e) {
+                logger.error("Error deserializing clothing item IDs", e);
+                // Fallback to single item
+                if (session.getClothingItemId() != null) {
+                    clothingItemIds.add(session.getClothingItemId());
+                }
+            }
+        } else if (session.getClothingItemId() != null) {
+            // Legacy support - single item
+            clothingItemIds.add(session.getClothingItemId());
+        }
+
+        TryOnResult result = tryOnGateway.generate(avatarId, clothingItemIds,
                 session.getRequestedSize(), session.getFitType());
 
         // Save result
@@ -151,8 +186,16 @@ public class TryOnService {
         // Get garment info from applied params
         Map<String, Object> appliedParams = result.getAppliedParams();
         if (appliedParams != null) {
-            entity.setGarmentCategory((String) appliedParams.get("garmentCategory"));
-            entity.setGarmentColor((String) appliedParams.get("garmentColor"));
+            entity.setGarmentCategory((String) appliedParams.get("primaryCategory"));
+            entity.setGarmentColor((String) appliedParams.get("garmentColors"));
+
+            // Store garment categories as JSON
+            try {
+                String categoriesJson = objectMapper.writeValueAsString(appliedParams.get("garmentCategories"));
+                entity.setGarmentCategoriesJson(categoriesJson);
+            } catch (JsonProcessingException e) {
+                logger.error("Error serializing garment categories", e);
+            }
         }
 
         try {
@@ -206,8 +249,22 @@ public class TryOnService {
         response.setNote(entity.getResultNote());
         response.setAvatarId(entity.getAvatarId());
         response.setAvatarUrl(entity.getAvatarUrl());
+
+        // Single item (legacy)
         response.setGarmentCategory(entity.getGarmentCategory());
         response.setGarmentColor(entity.getGarmentColor());
+
+        // Multiple items - deserialize from JSON
+        if (entity.getGarmentCategoriesJson() != null && !entity.getGarmentCategoriesJson().isEmpty()) {
+            try {
+                @SuppressWarnings("unchecked")
+                List<String> categories = objectMapper.readValue(entity.getGarmentCategoriesJson(), List.class);
+                response.setGarmentCategories(categories);
+            } catch (JsonProcessingException e) {
+                logger.error("Error deserializing garment categories", e);
+            }
+        }
+
         response.setIsFavorite(entity.getIsFavorite());
         response.setCreatedAt(entity.getCreatedAt());
 
@@ -318,6 +375,18 @@ public class TryOnService {
                     response.setAvatarUrl(entity.getAvatarUrl());
                     response.setGarmentCategory(entity.getGarmentCategory());
                     response.setGarmentColor(entity.getGarmentColor());
+
+                    // Multiple items - deserialize from JSON
+                    if (entity.getGarmentCategoriesJson() != null && !entity.getGarmentCategoriesJson().isEmpty()) {
+                        try {
+                            @SuppressWarnings("unchecked")
+                            List<String> categories = objectMapper.readValue(entity.getGarmentCategoriesJson(), List.class);
+                            response.setGarmentCategories(categories);
+                        } catch (JsonProcessingException e) {
+                            logger.error("Error deserializing garment categories", e);
+                        }
+                    }
+
                     response.setIsFavorite(entity.getIsFavorite());
                     response.setCreatedAt(entity.getCreatedAt());
 

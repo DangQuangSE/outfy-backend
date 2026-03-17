@@ -17,8 +17,13 @@ public class TryOnSession {
     @Column(name = "body_profile_id")
     private Long bodyProfileId;
 
+    // Single clothing item (legacy support)
     @Column(name = "clothing_item_id")
     private Long clothingItemId;
+
+    // Multiple clothing items (new - store as JSON)
+    @Column(name = "clothing_item_ids", columnDefinition = "TEXT")
+    private String clothingItemIdsJson;
 
     @Column(name = "wardrobe_item_id")
     private Long wardrobeItemId;
@@ -82,6 +87,8 @@ public class TryOnSession {
     public void setBodyProfileId(Long bodyProfileId) { this.bodyProfileId = bodyProfileId; }
     public Long getClothingItemId() { return clothingItemId; }
     public void setClothingItemId(Long clothingItemId) { this.clothingItemId = clothingItemId; }
+    public String getClothingItemIdsJson() { return clothingItemIdsJson; }
+    public void setClothingItemIdsJson(String clothingItemIdsJson) { this.clothingItemIdsJson = clothingItemIdsJson; }
     public Long getWardrobeItemId() { return wardrobeItemId; }
     public void setWardrobeItemId(Long wardrobeItemId) { this.wardrobeItemId = wardrobeItemId; }
     public String getAvatarId() { return avatarId; }
