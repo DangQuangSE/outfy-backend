@@ -2,12 +2,16 @@ package com.outfy.outfy_backend.modules.tryon.service;
 
 import com.outfy.outfy_backend.common.exception.ResourceNotFoundException;
 import com.outfy.outfy_backend.infrastructure.external.TryOnGateway;
+import com.outfy.outfy_backend.modules.tryon.dto.request.QuickTryOnRequest;
 import com.outfy.outfy_backend.modules.tryon.dto.request.CreateTryOnSessionRequest;
 import com.outfy.outfy_backend.modules.tryon.dto.request.TryOnFromWardrobeRequest;
 import com.outfy.outfy_backend.modules.tryon.dto.request.UpdateTryOnSessionRequest;
+import com.outfy.outfy_backend.modules.tryon.dto.response.QuickTryOnResponse;
 import com.outfy.outfy_backend.modules.tryon.dto.response.TryOnResult;
 import com.outfy.outfy_backend.modules.tryon.dto.response.TryOnResultResponse;
 import com.outfy.outfy_backend.modules.tryon.dto.response.TryOnSessionResponse;
+import com.outfy.outfy_backend.modules.bodyprofile.entity.BodyProfile;
+import com.outfy.outfy_backend.modules.bodyprofile.repository.BodyProfileRepository;
 import com.outfy.outfy_backend.modules.tryon.entity.TryOnResultEntity;
 import com.outfy.outfy_backend.modules.tryon.entity.TryOnSession;
 import com.outfy.outfy_backend.modules.tryon.mapper.TryOnMapper;
@@ -32,9 +36,23 @@ public class TryOnService {
 
     private static final Logger logger = LoggerFactory.getLogger(TryOnService.class);
 
+    // Base path for try-on models
+    private static final String TRYON_MODEL_PATH = "/models/try-on";
+
+    // Available models mapping
+    private static final Map<String, String> TRYON_MODELS = Map.ofEntries(
+            Map.entry("slim_female_cloth_crop_top_short_skirt", "body_slim_female_cloth_crop_top_short_skirt.glb"),
+            Map.entry("slim_female_cloth_dress", "body_slim_female_cloth_dress.glb"),
+            Map.entry("regular_female_cloth_female_tshirt_shorts", "body_regular_female_cloth_female_tshirt_shorts.glb"),
+            Map.entry("regular_male_cloth_tshirt_pants", "body_regular_male_cloth_tshirt_pants.glb"),
+            Map.entry("broad_male_cloth_hoodie_pants", "body_broad_male_cloth_hoodie_pants.glb"),
+            Map.entry("broad_male_cloth_jacket_pants", "body_broad_male_cloth_jacket_pants.glb")
+    );
+
     private final TryOnSessionRepository tryOnSessionRepository;
     private final TryOnResultRepository tryOnResultRepository;
     private final WardrobeItemRepository wardrobeItemRepository;
+    private final BodyProfileRepository bodyProfileRepository;
     private final TryOnGateway tryOnGateway;
     private final ObjectMapper objectMapper;
     private final TryOnMapper tryOnMapper;
@@ -43,12 +61,14 @@ public class TryOnService {
             TryOnSessionRepository tryOnSessionRepository,
             TryOnResultRepository tryOnResultRepository,
             WardrobeItemRepository wardrobeItemRepository,
+            BodyProfileRepository bodyProfileRepository,
             TryOnGateway tryOnGateway,
             ObjectMapper objectMapper,
             TryOnMapper tryOnMapper) {
         this.tryOnSessionRepository = tryOnSessionRepository;
         this.tryOnResultRepository = tryOnResultRepository;
         this.wardrobeItemRepository = wardrobeItemRepository;
+        this.bodyProfileRepository = bodyProfileRepository;
         this.tryOnGateway = tryOnGateway;
         this.objectMapper = objectMapper;
         this.tryOnMapper = tryOnMapper;
@@ -402,6 +422,265 @@ public class TryOnService {
                     return response;
                 })
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Quick try-on: Map body type + clothing items to available 3D model
+     * Returns URL to GLB file for 360 display
+     */
+    public QuickTryOnResponse quickTryOn(QuickTryOnRequest request) {
+        logger.info("Quick try-on for user: {}, bodyProfile: {}, gender: {}, bodyType: {}, wardrobeItems: {}",
+                request.getUserId(), request.getBodyProfileId(), request.getGender(),
+                request.getBodyType(), request.getWardrobeItemIds());
+
+        String gender;
+        String bodyType;
+
+        // 1. Determine body type - either from bodyProfileId OR from direct params
+        if (request.getBodyProfileId() != null) {
+            // Get from body profile
+            BodyProfile bodyProfile = bodyProfileRepository.findById(request.getBodyProfileId())
+                    .orElseThrow(() -> new ResourceNotFoundException("BodyProfile", "id", request.getBodyProfileId()));
+
+            if (!bodyProfile.getUserId().equals(request.getUserId())) {
+                throw new IllegalArgumentException("Body profile does not belong to user");
+            }
+
+            gender = bodyProfile.getGender();
+            bodyType = determineBodyTypeFromProfile(bodyProfile);
+        } else if (request.getGender() != null && request.getBodyType() != null) {
+            // Use directly provided gender and body type
+            gender = request.getGender();
+            bodyType = request.getBodyType();
+        } else {
+            throw new IllegalArgumentException("Either bodyProfileId or gender+bodyType must be provided");
+        }
+
+        // 2. Get wardrobe items and their categories
+        List<WardrobeItem> wardrobeItems = wardrobeItemRepository.findAllById(request.getWardrobeItemIds());
+        if (wardrobeItems.isEmpty()) {
+            throw new IllegalArgumentException("No wardrobe items found");
+        }
+
+        // Filter to only user's items
+        List<WardrobeItem> userItems = wardrobeItems.stream()
+                .filter(item -> item.getUserId() != null && item.getUserId().equals(request.getUserId()))
+                .collect(Collectors.toList());
+
+        if (userItems.isEmpty()) {
+            throw new IllegalArgumentException("Wardrobe items do not belong to user");
+        }
+
+        List<String> categories = userItems.stream()
+                .map(item -> item.getCategory() != null ? item.getCategory().toUpperCase() : "SHIRT")
+                .collect(Collectors.toList());
+
+        // 3. Map to available model - format: body_{bodyType}_{gender}_cloth_{category1}_{category2}
+        String modelFileName = findMatchingModel(bodyType, gender, categories);
+
+        // 4. Build response
+        QuickTryOnResponse response = new QuickTryOnResponse();
+        response.setModelUrl(TRYON_MODEL_PATH + "/" + modelFileName);
+        response.setModelFileName(modelFileName);
+        response.setBodyType(bodyType);
+        response.setGender(gender);
+        response.setClothingCategories(categories);
+        response.setFitScore(calculateFitScore(bodyType, categories));
+        response.setMessage("Try-on model loaded successfully");
+
+        logger.info("Quick try-on result: bodyType={}, gender={}, model={}",
+                bodyType, gender, modelFileName);
+
+        return response;
+    }
+
+    /**
+     * Determine body type from body profile measurements
+     */
+    private String determineBodyTypeFromProfile(BodyProfile profile) {
+        double heightM = profile.getHeightCm() / 100.0;
+        double bmi = profile.getWeightKg() / (heightM * heightM);
+        double waistToHipRatio = profile.getWaistCm() / profile.getHipCm();
+
+        String gender = profile.getGender();
+        boolean isFemale = "female".equalsIgnoreCase(gender);
+
+        if (isFemale) {
+            if (bmi < 18.5) return "slim";
+            else if (bmi < 24) {
+                return waistToHipRatio > 0.75 ? "curvy" : "regular";
+            } else if (bmi < 28) return "curvy";
+            else return "curvy";
+        } else {
+            if (bmi < 18.5) return "slim";
+            else if (bmi < 25) {
+                return profile.getShoulderCm() > 45 ? "broad" : "regular";
+            } else if (bmi < 30) return "broad";
+            else return "broad";
+        }
+    }
+
+    /**
+     * Map clothing category to garment part for model matching
+     */
+    private String mapCategoryToGarmentPart(String category) {
+        if (category == null) return "tshirt_pants";
+
+        switch (category.toUpperCase()) {
+            case "HOODIE":
+                return "hoodie_pants";
+            case "T-SHIRT":
+            case "TSHIRT":
+                return "tshirt_pants";
+            case "FEMALE_TSHIRT":
+                return "female_tshirt_shorts";
+            case "SHIRT":
+                return "tshirt_pants";
+            case "JACKET":
+                return "jacket_pants";
+            case "PANTS":
+                return "tshirt_pants";
+            case "SHORTS":
+                return "tshirt_pants";
+            case "DRESS":
+                return "dress";
+            case "SKIRT":
+                return "short_skirt";
+            case "SHORT_SKIRT":
+                return "short_skirt";
+            case "CROP_TOP":
+                return "crop_top_short_skirt";
+            default:
+                return "tshirt_pants";
+        }
+    }
+
+    /**
+     * Find matching model from available models
+     * Format: body_{bodyType}_{gender}_cloth_{category1}_{category2}.glb
+     */
+    private String findMatchingModel(String bodyType, String gender, List<String> categories) {
+        // Build model filename directly: body_{bodyType}_{gender}_cloth_{category1}_{category2}
+        String normalizedGender = (gender != null) ? gender.toLowerCase() : "female";
+        String normalizedBodyType = (bodyType != null) ? bodyType.toLowerCase() : "regular";
+
+        // Build garment parts from categories
+        String garmentParts = buildGarmentParts(categories);
+
+        // Build the expected model key (format: bodyType_gender_cloth_garmentParts)
+        String modelKey = normalizedBodyType + "_" + normalizedGender + "_cloth_" + garmentParts;
+
+        logger.info("Looking for model with key: {}", modelKey);
+
+        // Try exact match first
+        if (TRYON_MODELS.containsKey(modelKey)) {
+            return TRYON_MODELS.get(modelKey);
+        }
+
+        // Try partial match - find first model with matching gender + body type
+        for (Map.Entry<String, String> entry : TRYON_MODELS.entrySet()) {
+            String key = entry.getKey();
+            if (key.contains(normalizedGender) && key.contains(normalizedBodyType)) {
+                logger.info("Found partial match: {}", key);
+                return entry.getValue();
+            }
+        }
+
+        // Fallback: return first available model (should not happen with proper data)
+        logger.warn("No matching model found, using fallback");
+        return TRYON_MODELS.values().iterator().next();
+    }
+
+    /**
+     * Build garment parts string from categories
+     */
+    private String buildGarmentParts(List<String> categories) {
+        if (categories == null || categories.isEmpty()) {
+            return "tshirt_pants";
+        }
+
+        boolean hasTop = false;
+        boolean hasBottom = false;
+        boolean isDress = false;
+
+        for (String category : categories) {
+            String cat = category.toUpperCase();
+            if (cat.contains("DRESS")) {
+                isDress = true;
+                break;
+            }
+            if (!hasTop && (cat.contains("TSHIRT") || cat.contains("SHIRT") || cat.contains("HOODIE") ||
+                    cat.contains("JACKET") || cat.contains("CROP") || cat.contains("TOP"))) {
+                hasTop = true;
+            }
+            if (!hasBottom && (cat.contains("PANTS") || cat.contains("SHORTS") || cat.contains("SKIRT"))) {
+                hasBottom = true;
+            }
+        }
+
+        // Handle dress case
+        if (isDress) {
+            return "dress";
+        }
+
+        // Build garment parts based on top + bottom
+        if (hasTop && hasBottom) {
+            // Need specific combination - let's determine exact garment
+            String topPart = null;
+            String bottomPart = null;
+
+            for (String category : categories) {
+                String cat = category.toUpperCase();
+                if (topPart == null && (cat.contains("TSHIRT") || cat.contains("SHIRT") || cat.contains("CROP") || cat.contains("TOP"))) {
+                    topPart = mapCategoryToGarmentPart(cat);
+                }
+                if (bottomPart == null && (cat.contains("PANTS") || cat.contains("SHORTS") || cat.contains("SKIRT"))) {
+                    bottomPart = mapCategoryToGarmentPart(cat);
+                }
+            }
+
+            // Return combined parts
+            if (topPart != null && bottomPart != null) {
+                return topPart + "_" + bottomPart;
+            }
+            return "tshirt_pants";
+        } else if (hasTop) {
+            return "tshirt_pants";
+        } else if (hasBottom) {
+            return "tshirt_pants";
+        }
+
+        return "tshirt_pants";
+    }
+
+    /**
+     * Calculate fit score based on body type and clothing categories
+     */
+    private Double calculateFitScore(String bodyType, List<String> categories) {
+        // Simple heuristic: more category-specific = higher score
+        double baseScore = 0.7;
+
+        if (categories.size() >= 2) {
+            baseScore += 0.15; // Full outfit bonus
+        }
+
+        // Body type specific matching
+        if (bodyType != null) {
+            switch (bodyType.toLowerCase()) {
+                case "slim":
+                    baseScore += 0.05;
+                    break;
+                case "broad":
+                    baseScore += 0.05;
+                    break;
+                case "regular":
+                case "curvy":
+                    baseScore += 0.1;
+                    break;
+            }
+        }
+
+        return Math.min(baseScore, 1.0);
     }
 }
 

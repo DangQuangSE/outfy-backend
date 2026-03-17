@@ -3,8 +3,10 @@ package com.outfy.outfy_backend.modules.tryon.controller;
 import com.outfy.outfy_backend.common.constant.AppConstants;
 import com.outfy.outfy_backend.common.response.ApiResponse;
 import com.outfy.outfy_backend.modules.tryon.dto.request.CreateTryOnSessionRequest;
+import com.outfy.outfy_backend.modules.tryon.dto.request.QuickTryOnRequest;
 import com.outfy.outfy_backend.modules.tryon.dto.request.TryOnFromWardrobeRequest;
 import com.outfy.outfy_backend.modules.tryon.dto.request.UpdateTryOnSessionRequest;
+import com.outfy.outfy_backend.modules.tryon.dto.response.QuickTryOnResponse;
 import com.outfy.outfy_backend.modules.tryon.dto.response.TryOnResult;
 import com.outfy.outfy_backend.modules.tryon.dto.response.TryOnResultResponse;
 import com.outfy.outfy_backend.modules.tryon.dto.response.TryOnSessionResponse;
@@ -46,6 +48,17 @@ public class TryOnController {
         TryOnSessionResponse response = tryOnService.createTryOnFromWardrobe(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Try-on session created from wardrobe successfully", response));
+    }
+
+    /**
+     * Quick try-on: Get 3D model URL for body type + clothing items
+     * Returns URL to GLB file for 360 display
+     */
+    @PostMapping("/quick")
+    public ResponseEntity<ApiResponse<QuickTryOnResponse>> quickTryOn(
+            @Valid @RequestBody QuickTryOnRequest request) {
+        QuickTryOnResponse response = tryOnService.quickTryOn(request);
+        return ResponseEntity.ok(ApiResponse.success("Try-on model loaded successfully", response));
     }
 
     /**

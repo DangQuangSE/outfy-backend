@@ -4,9 +4,11 @@ import jakarta.validation.constraints.*;
 
 /**
  * Request DTO for direct avatar generation from measurements
- * Used for demo without database
  */
 public class GenerateAvatarRequest {
+
+    // Optional userId - if provided, will save to database
+    private Long userId;
 
     @NotBlank(message = "Gender is required")
     @Pattern(regexp = "(?i)male|female", message = "Gender must be Male or Female")
@@ -45,6 +47,8 @@ public class GenerateAvatarRequest {
     private Double inseamCm;
 
     // Getters and Setters
+    public Long getUserId() { return userId; }
+    public void setUserId(Long userId) { this.userId = userId; }
     public String getGender() { return gender; }
     public void setGender(String gender) { this.gender = gender; }
     public Double getHeightCm() { return heightCm; }
