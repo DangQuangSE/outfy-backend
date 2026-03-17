@@ -160,10 +160,15 @@ public class WardrobeService {
         // Use mapper for basic mapping
         WardrobeItemResponse response = wardrobeMapper.toResponse(item);
 
-        // Get image URL from clothing item if available
+        // Get additional fields from clothing item if available
         if (item.getClothingItemId() != null) {
             clothingItemRepository.findById(item.getClothingItemId())
-                    .ifPresent(clothing -> response.setImageUrl(clothing.getImageUrl()));
+                    .ifPresent(clothing -> {
+                        response.setImageUrl(clothing.getImageUrl());
+                        response.setTemplateCode(clothing.getTemplateCode());
+                        response.setModelUrl(clothing.getModelUrl());
+                        response.setPreviewUrl(clothing.getPreviewUrl());
+                    });
         }
 
         return response;

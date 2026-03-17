@@ -12,6 +12,12 @@ public class WardrobeItemResponse {
     private Boolean isFavorite;
     private String notes;
     private String imageUrl;
+
+    // Model 3D fields - from ClothingItem
+    private String templateCode;
+    private String modelUrl;
+    private String previewUrl;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -34,6 +40,12 @@ public class WardrobeItemResponse {
     public void setNotes(String notes) { this.notes = notes; }
     public String getImageUrl() { return imageUrl; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+    public String getTemplateCode() { return templateCode; }
+    public void setTemplateCode(String templateCode) { this.templateCode = templateCode; }
+    public String getModelUrl() { return modelUrl; }
+    public void setModelUrl(String modelUrl) { this.modelUrl = modelUrl; }
+    public String getPreviewUrl() { return previewUrl; }
+    public void setPreviewUrl(String previewUrl) { this.previewUrl = previewUrl; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
