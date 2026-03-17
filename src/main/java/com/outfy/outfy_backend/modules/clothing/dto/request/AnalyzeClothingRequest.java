@@ -17,6 +17,13 @@ public class AnalyzeClothingRequest {
     private String fileName;
     private String name;
 
+    /**
+     * Garment category - if provided, used directly for template mapping.
+     * If not provided, will be detected from filename.
+     * Examples: TSHIRT, HOODIE, SHIRT, PANTS, DRESS, etc.
+     */
+    private String garmentCategory;
+
     // Constructors
     public AnalyzeClothingRequest() {}
 
@@ -35,5 +42,7 @@ public class AnalyzeClothingRequest {
     public void setFileName(String fileName) { this.fileName = fileName; }
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
+    public String getGarmentCategory() { return garmentCategory; }
+    public void setGarmentCategory(String garmentCategory) { this.garmentCategory = garmentCategory; }
 }
 

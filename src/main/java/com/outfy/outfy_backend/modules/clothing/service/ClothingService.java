@@ -243,11 +243,12 @@ public class ClothingService implements IClothingAnalysisService {
 
     /**
      * Analyze clothing directly from image (for demo without database)
-     * Creates a ClothingItem with ANALYZED status
+     * Uses garmentCategory from request if provided, otherwise detects from filename
      */
+    @Transactional
     public ClothingAnalysisResult analyzeClothingDirect(AnalyzeClothingRequest request) {
-        logger.info("Analyzing clothing directly from image - url: {}, filename: {}",
-                request.getImageUrl(), request.getFileName());
+        logger.info("Analyzing clothing directly from image - url: {}, filename: {}, category: {}",
+                request.getImageUrl(), request.getFileName(), request.getGarmentCategory());
 
         // First create a ClothingItem with CREATED status
         ClothingItem item = new ClothingItem();
@@ -261,8 +262,45 @@ public class ClothingService implements IClothingAnalysisService {
         ClothingItem savedItem = clothingItemRepository.save(item);
         logger.info("Created clothing item with id: {}", savedItem.getId());
 
-        // Then analyze it
-        return analyzeClothing(savedItem.getId());
+        try {
+            ClothingAnalysisResult result;
+
+            // Use explicit category if provided, otherwise use analyzeFromImage
+            if (request.getGarmentCategory() != null && !request.getGarmentCategory().isBlank()) {
+                result = clothingAnalysisGateway.analyzeFromImageWithCategory(
+                        request.getImageUrl(),
+                        request.getFileName(),
+                        request.getGarmentCategory()
+                );
+            } else {
+                result = clothingAnalysisGateway.analyzeFromImage(
+                        request.getImageUrl(),
+                        request.getFileName()
+                );
+            }
+
+            // Update item with analysis result
+            item.setGarmentCategory(result.getGarmentCategory());
+            item.setTemplateCode(result.getTemplateCode());
+            item.setPreviewUrl(result.getPreviewUrl());
+            item.setModelUrl(result.getModelUrl());
+            item.setStatus(ClothingItemStatus.ANALYZED);
+
+            savedItem = clothingItemRepository.save(item);
+
+            // Set clothingItemId for frontend
+            result.setClothingItemId(savedItem.getId());
+
+            logger.info("Analyzed clothing directly - category: {}, templateCode: {}",
+                    result.getGarmentCategory(), result.getTemplateCode());
+
+            return result;
+        } catch (Exception e) {
+            logger.error("Error analyzing clothing directly", e);
+            item.setStatus(ClothingItemStatus.FAILED);
+            clothingItemRepository.save(item);
+            throw new RuntimeException("Failed to analyze clothing: " + e.getMessage());
+        }
     }
 }
 

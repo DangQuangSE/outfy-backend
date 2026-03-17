@@ -17,150 +17,150 @@ public class MockClothingAnalysisGateway implements ClothingAnalysisGateway {
     private static final Logger logger = LoggerFactory.getLogger(MockClothingAnalysisGateway.class);
 
     // Template URL mapping - matching actual GLB file names
-    private static final Map<GarmentCategory, String> TEMPLATE_URL_MAP = Map.of(
-            GarmentCategory.TSHIRT, "/models/cloth/tshirt_template.glb",
-            GarmentCategory.HOODIE, "/models/cloth/hoodie_template.glb",
-            GarmentCategory.SHIRT, "/models/cloth/shirt_template.glb",
-            GarmentCategory.PANTS, "/models/cloth/pants_template.glb",
-            GarmentCategory.SHORTS, "/models/cloth/shorts_template.glb",
-            GarmentCategory.SKIRT, "/models/cloth/skirt_template.glb",
-            GarmentCategory.SHORT_SKIRT, "/models/cloth/short_skirt_template.glb",
-            GarmentCategory.DRESS, "/models/cloth/dress_template.glb",
-            GarmentCategory.JACKET, "/models/cloth/jacket_template.glb",
-            GarmentCategory.CLOTH_TOP, "/models/cloth/cloth_top_template.glb",
-            GarmentCategory.FEMALE_SHIRT, "/models/cloth/female_shirt_template.glb"
+    private static final Map<GarmentCategory, String> TEMPLATE_URL_MAP = Map.ofEntries(
+            Map.entry(GarmentCategory.TSHIRT, "/models/cloth/tshirt_template.glb"),
+            Map.entry(GarmentCategory.HOODIE, "/models/cloth/hoodie_template.glb"),
+            Map.entry(GarmentCategory.SHIRT, "/models/cloth/shirt_template.glb"),
+            Map.entry(GarmentCategory.PANTS, "/models/cloth/pants_template.glb"),
+            Map.entry(GarmentCategory.SHORTS, "/models/cloth/shorts_template.glb"),
+            Map.entry(GarmentCategory.SKIRT, "/models/cloth/skirt_template.glb"),
+            Map.entry(GarmentCategory.SHORT_SKIRT, "/models/cloth/short_skirt_template.glb"),
+            Map.entry(GarmentCategory.DRESS, "/models/cloth/dress_template.glb"),
+            Map.entry(GarmentCategory.JACKET, "/models/cloth/jacket_template.glb"),
+            Map.entry(GarmentCategory.CLOTH_TOP, "/models/cloth/cloth_top_template.glb"),
+            Map.entry(GarmentCategory.FEMALE_SHIRT, "/models/cloth/female_shirt_template.glb")
     );
 
     // Default attributes by category
-    private static final Map<GarmentCategory, Map<String, Object>> DEFAULT_ATTRIBUTES = Map.of(
-            GarmentCategory.HOODIE, Map.of(
+    private static final Map<GarmentCategory, Map<String, Object>> DEFAULT_ATTRIBUTES = Map.ofEntries(
+            Map.entry(GarmentCategory.HOODIE, Map.of(
                     "color", "Black",
                     "sleeveType", "Long",
                     "fitType", "Loose",
                     "hasHood", true,
                     "hasZipper", true
-            ),
-            GarmentCategory.TSHIRT, Map.of(
+            )),
+            Map.entry(GarmentCategory.TSHIRT, Map.of(
                     "color", "White",
                     "sleeveType", "Short",
                     "fitType", "Regular",
                     "hasHood", false,
                     "hasZipper", false
-            ),
-            GarmentCategory.SHIRT, Map.of(
+            )),
+            Map.entry(GarmentCategory.SHIRT, Map.of(
                     "color", "Blue",
                     "sleeveType", "Short",
                     "fitType", "Regular",
                     "hasCollar", true,
                     "hasButton", true
-            ),
-            GarmentCategory.PANTS, Map.of(
+            )),
+            Map.entry(GarmentCategory.PANTS, Map.of(
                     "color", "Blue",
                     "fitType", "Regular",
                     "waistType", "Regular",
                     "length", "Full"
-            ),
-            GarmentCategory.SKIRT, Map.of(
+            )),
+            Map.entry(GarmentCategory.SKIRT, Map.of(
                     "color", "Black",
                     "fitType", "Regular",
                     "length", "Mini"
-            ),
-            GarmentCategory.DRESS, Map.of(
+            )),
+            Map.entry(GarmentCategory.DRESS, Map.of(
                     "color", "Red",
                     "sleeveType", "Long",
                     "fitType", "Regular",
                     "length", "Midi"
-            ),
-            GarmentCategory.JACKET, Map.of(
+            )),
+            Map.entry(GarmentCategory.JACKET, Map.of(
                     "color", "Brown",
                     "sleeveType", "Long",
                     "fitType", "Regular",
                     "hasZipper", true,
                     "hasHood", false
-            ),
-            GarmentCategory.SHORTS, Map.of(
+            )),
+            Map.entry(GarmentCategory.SHORTS, Map.of(
                     "color", "Gray",
                     "fitType", "Regular",
                     "length", "Short"
-            ),
-            GarmentCategory.SHORT_SKIRT, Map.of(
+            )),
+            Map.entry(GarmentCategory.SHORT_SKIRT, Map.of(
                     "color", "Pink",
                     "fitType", "Regular",
                     "length", "Mini"
-            ),
-            GarmentCategory.CLOTH_TOP, Map.of(
+            )),
+            Map.entry(GarmentCategory.CLOTH_TOP, Map.of(
                     "color", "White",
                     "sleeveType", "Short",
                     "fitType", "Slim",
                     "hasHood", false,
                     "hasZipper", false
-            ),
-            GarmentCategory.FEMALE_SHIRT, Map.of(
+            )),
+            Map.entry(GarmentCategory.FEMALE_SHIRT, Map.of(
                     "color", "White",
                     "sleeveType", "Short",
                     "fitType", "Regular",
                     "hasCollar", true,
                     "hasButton", true
-            )
+            ))
     );
 
     // Default garment parameters by category
-    private static final Map<GarmentCategory, Map<String, Object>> DEFAULT_GARMENT_PARAMS = Map.of(
-            GarmentCategory.HOODIE, Map.of(
+    private static final Map<GarmentCategory, Map<String, Object>> DEFAULT_GARMENT_PARAMS = Map.ofEntries(
+            Map.entry(GarmentCategory.HOODIE, Map.of(
                     "chestWidth", 52.0,
                     "bodyLength", 70.0,
                     "sleeveLength", 63.0
-            ),
-            GarmentCategory.TSHIRT, Map.of(
+            )),
+            Map.entry(GarmentCategory.TSHIRT, Map.of(
                     "chestWidth", 48.0,
                     "bodyLength", 68.0,
                     "sleeveLength", 22.0
-            ),
-            GarmentCategory.SHIRT, Map.of(
+            )),
+            Map.entry(GarmentCategory.SHIRT, Map.of(
                     "chestWidth", 50.0,
                     "bodyLength", 72.0,
                     "sleeveLength", 60.0
-            ),
-            GarmentCategory.PANTS, Map.of(
+            )),
+            Map.entry(GarmentCategory.PANTS, Map.of(
                     "waistWidth", 38.0,
                     "inseamLength", 82.0,
                     "legWidth", 22.0
-            ),
-            GarmentCategory.SKIRT, Map.of(
+            )),
+            Map.entry(GarmentCategory.SKIRT, Map.of(
                     "waistWidth", 32.0,
                     "length", 45.0,
                     "width", 52.0
-            ),
-            GarmentCategory.DRESS, Map.of(
+            )),
+            Map.entry(GarmentCategory.DRESS, Map.of(
                     "chestWidth", 42.0,
                     "waistWidth", 34.0,
                     "length", 110.0
-            ),
-            GarmentCategory.JACKET, Map.of(
+            )),
+            Map.entry(GarmentCategory.JACKET, Map.of(
                     "chestWidth", 54.0,
                     "bodyLength", 75.0,
                     "sleeveLength", 64.0
-            ),
-            GarmentCategory.SHORTS, Map.of(
+            )),
+            Map.entry(GarmentCategory.SHORTS, Map.of(
                     "waistWidth", 34.0,
                     "inseamLength", 15.0,
                     "legWidth", 24.0
-            ),
-            GarmentCategory.SHORT_SKIRT, Map.of(
+            )),
+            Map.entry(GarmentCategory.SHORT_SKIRT, Map.of(
                     "waistWidth", 30.0,
                     "length", 35.0,
                     "width", 48.0
-            ),
-            GarmentCategory.CLOTH_TOP, Map.of(
+            )),
+            Map.entry(GarmentCategory.CLOTH_TOP, Map.of(
                     "chestWidth", 40.0,
                     "bodyLength", 45.0,
                     "sleeveLength", 18.0
-            ),
-            GarmentCategory.FEMALE_SHIRT, Map.of(
+            )),
+            Map.entry(GarmentCategory.FEMALE_SHIRT, Map.of(
                     "chestWidth", 42.0,
                     "bodyLength", 60.0,
                     "sleeveLength", 20.0
-            )
+            ))
     );
 
     @Override
@@ -222,6 +222,68 @@ public class MockClothingAnalysisGateway implements ClothingAnalysisGateway {
                 garmentParameters,
                 previewUrl,
                 templateUrl,  // modelUrl - path to GLB file
+                confidence
+        );
+    }
+
+    /**
+     * Analyze clothing with explicit garment category
+     */
+    @Override
+    public ClothingAnalysisResult analyzeFromImageWithCategory(String imageUrl, String fileName, String garmentCategory) {
+        logger.info("Mock clothing analysis with category - url: {}, filename: {}, category: {}",
+                imageUrl, fileName, garmentCategory);
+
+        // Parse category from string
+        GarmentCategory category;
+        try {
+            category = GarmentCategory.valueOf(garmentCategory.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            logger.warn("Invalid garment category: {}, falling back to filename detection", garmentCategory);
+            // Fallback to filename detection
+            String filename = fileName != null ? fileName : extractFilenameFromUrl(imageUrl);
+            category = GarmentCategory.fromFilename(filename);
+        }
+
+        // Determine sleeve type (use default based on category)
+        SleeveType sleeveType = SleeveType.fromFilename(fileName, category);
+
+        // Determine fit type
+        FitType fitType = FitType.fromFilename(fileName);
+
+        // Get template code
+        String templateCode = category.getTemplateCode();
+
+        // Get template URL
+        String templateUrl = TEMPLATE_URL_MAP.getOrDefault(category, "/models/cloth/tshirt_template.glb");
+
+        // Get attributes
+        Map<String, Object> attributes = new HashMap<>(DEFAULT_ATTRIBUTES.getOrDefault(category, new HashMap<>()));
+        attributes.put("sleeveType", sleeveType.name());
+        attributes.put("fitType", fitType.name());
+
+        // Get garment parameters
+        Map<String, Object> garmentParameters = new HashMap<>(
+                DEFAULT_GARMENT_PARAMS.getOrDefault(category, new HashMap<>())
+        );
+
+        // Generate preview URL
+        String previewUrl = templateUrl;
+
+        // Confidence is higher when category is explicitly provided
+        double confidence = 0.95;
+
+        logger.info("Analyzed clothing with explicit category - category: {}, template: {}, confidence: {}",
+                category, templateCode, confidence);
+
+        return new ClothingAnalysisResult(
+                null,
+                category.name(),
+                templateCode,
+                attributes,
+                garmentParameters,
+                previewUrl,
+                templateUrl,
                 confidence
         );
     }
