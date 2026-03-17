@@ -42,6 +42,8 @@ public class SecurityConfig {
                 .requestMatchers("/models/**").permitAll()
                 .requestMatchers("/previews/**").permitAll()
                 .requestMatchers("/api/v1/auth/**").permitAll()
+                // Public access for clothing templates (dev mode)
+                .requestMatchers("/api/v1/clothes/**").permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

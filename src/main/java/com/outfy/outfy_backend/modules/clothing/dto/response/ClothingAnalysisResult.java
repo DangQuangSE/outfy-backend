@@ -9,6 +9,7 @@ public class ClothingAnalysisResult {
     private Map<String, Object> attributes;
     private Map<String, Object> garmentParameters;
     private String previewUrl;
+    private String modelUrl;  // URL to GLB file
     private double confidence;
 
     public ClothingAnalysisResult() {}
@@ -16,26 +17,28 @@ public class ClothingAnalysisResult {
     public ClothingAnalysisResult(Long clothingItemId, String garmentCategory, String templateCode,
                                  Map<String, Object> attributes,
                                  Map<String, Object> garmentParameters,
-                                 String previewUrl) {
+                                 String previewUrl, String modelUrl) {
         this.clothingItemId = clothingItemId;
         this.garmentCategory = garmentCategory;
         this.templateCode = templateCode;
         this.attributes = attributes;
         this.garmentParameters = garmentParameters;
         this.previewUrl = previewUrl;
+        this.modelUrl = modelUrl;
         this.confidence = 0.85;
     }
 
     public ClothingAnalysisResult(Long clothingItemId, String garmentCategory, String templateCode,
                                  Map<String, Object> attributes,
                                  Map<String, Object> garmentParameters,
-                                 String previewUrl, double confidence) {
+                                 String previewUrl, String modelUrl, double confidence) {
         this.clothingItemId = clothingItemId;
         this.garmentCategory = garmentCategory;
         this.templateCode = templateCode;
         this.attributes = attributes;
         this.garmentParameters = garmentParameters;
         this.previewUrl = previewUrl;
+        this.modelUrl = modelUrl;
         this.confidence = confidence;
     }
 
@@ -52,6 +55,8 @@ public class ClothingAnalysisResult {
     public void setGarmentParameters(Map<String, Object> garmentParameters) { this.garmentParameters = garmentParameters; }
     public String getPreviewUrl() { return previewUrl; }
     public void setPreviewUrl(String previewUrl) { this.previewUrl = previewUrl; }
+    public String getModelUrl() { return modelUrl; }
+    public void setModelUrl(String modelUrl) { this.modelUrl = modelUrl; }
     public double getConfidence() { return confidence; }
     public void setConfidence(double confidence) { this.confidence = confidence; }
 }

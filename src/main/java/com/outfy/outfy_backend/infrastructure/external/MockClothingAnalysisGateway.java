@@ -16,15 +16,19 @@ public class MockClothingAnalysisGateway implements ClothingAnalysisGateway {
 
     private static final Logger logger = LoggerFactory.getLogger(MockClothingAnalysisGateway.class);
 
-    // Template URL mapping - using local GLB files
+    // Template URL mapping - matching actual GLB file names
     private static final Map<GarmentCategory, String> TEMPLATE_URL_MAP = Map.of(
             GarmentCategory.TSHIRT, "/models/cloth/tshirt_template.glb",
             GarmentCategory.HOODIE, "/models/cloth/hoodie_template.glb",
             GarmentCategory.SHIRT, "/models/cloth/shirt_template.glb",
             GarmentCategory.PANTS, "/models/cloth/pants_template.glb",
+            GarmentCategory.SHORTS, "/models/cloth/shorts_template.glb",
             GarmentCategory.SKIRT, "/models/cloth/skirt_template.glb",
+            GarmentCategory.SHORT_SKIRT, "/models/cloth/short_skirt_template.glb",
             GarmentCategory.DRESS, "/models/cloth/dress_template.glb",
-            GarmentCategory.JACKET, "/models/cloth/jacket_template.glb"
+            GarmentCategory.JACKET, "/models/cloth/jacket_template.glb",
+            GarmentCategory.CLOTH_TOP, "/models/cloth/cloth_top_template.glb",
+            GarmentCategory.FEMALE_SHIRT, "/models/cloth/female_shirt_template.glb"
     );
 
     // Default attributes by category
@@ -73,6 +77,30 @@ public class MockClothingAnalysisGateway implements ClothingAnalysisGateway {
                     "fitType", "Regular",
                     "hasZipper", true,
                     "hasHood", false
+            ),
+            GarmentCategory.SHORTS, Map.of(
+                    "color", "Gray",
+                    "fitType", "Regular",
+                    "length", "Short"
+            ),
+            GarmentCategory.SHORT_SKIRT, Map.of(
+                    "color", "Pink",
+                    "fitType", "Regular",
+                    "length", "Mini"
+            ),
+            GarmentCategory.CLOTH_TOP, Map.of(
+                    "color", "White",
+                    "sleeveType", "Short",
+                    "fitType", "Slim",
+                    "hasHood", false,
+                    "hasZipper", false
+            ),
+            GarmentCategory.FEMALE_SHIRT, Map.of(
+                    "color", "White",
+                    "sleeveType", "Short",
+                    "fitType", "Regular",
+                    "hasCollar", true,
+                    "hasButton", true
             )
     );
 
@@ -112,6 +140,26 @@ public class MockClothingAnalysisGateway implements ClothingAnalysisGateway {
                     "chestWidth", 54.0,
                     "bodyLength", 75.0,
                     "sleeveLength", 64.0
+            ),
+            GarmentCategory.SHORTS, Map.of(
+                    "waistWidth", 34.0,
+                    "inseamLength", 15.0,
+                    "legWidth", 24.0
+            ),
+            GarmentCategory.SHORT_SKIRT, Map.of(
+                    "waistWidth", 30.0,
+                    "length", 35.0,
+                    "width", 48.0
+            ),
+            GarmentCategory.CLOTH_TOP, Map.of(
+                    "chestWidth", 40.0,
+                    "bodyLength", 45.0,
+                    "sleeveLength", 18.0
+            ),
+            GarmentCategory.FEMALE_SHIRT, Map.of(
+                    "chestWidth", 42.0,
+                    "bodyLength", 60.0,
+                    "sleeveLength", 20.0
             )
     );
 
@@ -165,6 +213,7 @@ public class MockClothingAnalysisGateway implements ClothingAnalysisGateway {
         logger.info("Analyzed clothing - category: {}, template: {}, confidence: {}",
                 category, templateCode, confidence);
 
+        // Use templateUrl as modelUrl (GLB file path)
         return new ClothingAnalysisResult(
                 null,
                 category.name(),
@@ -172,19 +221,22 @@ public class MockClothingAnalysisGateway implements ClothingAnalysisGateway {
                 attributes,
                 garmentParameters,
                 previewUrl,
+                templateUrl,  // modelUrl - path to GLB file
                 confidence
         );
     }
 
     private ClothingAnalysisResult createDefaultResult() {
         GarmentCategory category = GarmentCategory.HOODIE;
+        String templateUrl = TEMPLATE_URL_MAP.get(category);
         return new ClothingAnalysisResult(
                 null,
                 category.name(),
                 category.getTemplateCode(),
                 new HashMap<>(DEFAULT_ATTRIBUTES.get(category)),
                 new HashMap<>(DEFAULT_GARMENT_PARAMS.get(category)),
-                TEMPLATE_URL_MAP.get(category),
+                templateUrl,
+                templateUrl,  // modelUrl - path to GLB file
                 0.85
         );
     }
