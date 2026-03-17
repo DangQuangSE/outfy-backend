@@ -17,8 +17,40 @@ public class TryOnSession {
     @Column(name = "body_profile_id")
     private Long bodyProfileId;
 
+    // Single clothing item (legacy support)
     @Column(name = "clothing_item_id")
     private Long clothingItemId;
+
+    // Multiple clothing items (new - store as JSON)
+    @Column(name = "clothing_item_ids", columnDefinition = "TEXT")
+    private String clothingItemIdsJson;
+
+    @Column(name = "wardrobe_item_id")
+    private Long wardrobeItemId;
+
+    @Column(name = "avatar_id")
+    private String avatarId;
+
+    @Column(name = "avatar_url")
+    private String avatarUrl;
+
+    @Column(name = "avatar_model_url")
+    private String avatarModelUrl;
+
+    @Column(name = "garment_model_url")
+    private String garmentModelUrl;
+
+    @Column(name = "garment_category")
+    private String garmentCategory;
+
+    @Column(name = "fit_type")
+    private String fitType;
+
+    @Column(name = "sleeve_length")
+    private String sleeveLength;
+
+    @Column(name = "garment_color")
+    private String garmentColor;
 
     @Column
     private String status;
@@ -55,6 +87,26 @@ public class TryOnSession {
     public void setBodyProfileId(Long bodyProfileId) { this.bodyProfileId = bodyProfileId; }
     public Long getClothingItemId() { return clothingItemId; }
     public void setClothingItemId(Long clothingItemId) { this.clothingItemId = clothingItemId; }
+    public String getClothingItemIdsJson() { return clothingItemIdsJson; }
+    public void setClothingItemIdsJson(String clothingItemIdsJson) { this.clothingItemIdsJson = clothingItemIdsJson; }
+    public Long getWardrobeItemId() { return wardrobeItemId; }
+    public void setWardrobeItemId(Long wardrobeItemId) { this.wardrobeItemId = wardrobeItemId; }
+    public String getAvatarId() { return avatarId; }
+    public void setAvatarId(String avatarId) { this.avatarId = avatarId; }
+    public String getAvatarUrl() { return avatarUrl; }
+    public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
+    public String getAvatarModelUrl() { return avatarModelUrl; }
+    public void setAvatarModelUrl(String avatarModelUrl) { this.avatarModelUrl = avatarModelUrl; }
+    public String getGarmentModelUrl() { return garmentModelUrl; }
+    public void setGarmentModelUrl(String garmentModelUrl) { this.garmentModelUrl = garmentModelUrl; }
+    public String getGarmentCategory() { return garmentCategory; }
+    public void setGarmentCategory(String garmentCategory) { this.garmentCategory = garmentCategory; }
+    public String getFitType() { return fitType; }
+    public void setFitType(String fitType) { this.fitType = fitType; }
+    public String getSleeveLength() { return sleeveLength; }
+    public void setSleeveLength(String sleeveLength) { this.sleeveLength = sleeveLength; }
+    public String getGarmentColor() { return garmentColor; }
+    public void setGarmentColor(String garmentColor) { this.garmentColor = garmentColor; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
     public String getRequestedSize() { return requestedSize; }

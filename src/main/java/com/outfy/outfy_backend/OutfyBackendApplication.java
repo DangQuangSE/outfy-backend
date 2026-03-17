@@ -1,14 +1,16 @@
 package com.outfy.outfy_backend;
 
+import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.annotation.PropertySources;
-import io.github.cdimascio.dotenv.Dotenv;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.util.Objects;
 
 @SpringBootApplication
+@EnableScheduling
 @PropertySources({
 		@PropertySource("classpath:application.properties"),
 		@PropertySource(value = "file:.env", ignoreResourceNotFound = true)

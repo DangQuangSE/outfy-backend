@@ -129,11 +129,12 @@ public class BodyProfileService implements IBodyProfileService {
     }
 
     /**
-     * Generate avatar directly from measurements (for demo without database)
+     * Generate avatar directly from measurements
+     * If userId is provided, saves result to database
      */
     public BodyGenerationResult generateAvatarDirect(GenerateAvatarRequest request) {
-        logger.info("Generating avatar directly from measurements - gender: {}, height: {}, weight: {}",
-                request.getGender(), request.getHeightCm(), request.getWeightKg());
+        logger.info("Generating avatar directly from measurements - userId: {}, gender: {}, height: {}, weight: {}",
+                request.getUserId(), request.getGender(), request.getHeightCm(), request.getWeightKg());
 
         // Call gateway to generate avatar from measurements
         BodyGenerationResult result = bodyGenerationGateway.generateFromMeasurements(
@@ -150,7 +151,60 @@ public class BodyProfileService implements IBodyProfileService {
         logger.info("Generated avatar - bodyType: {}, preset: {}, modelUrl: {}",
                 result.getBodyType(), result.getAvatarPresetCode(), result.getModelUrl());
 
+        // Save to database if userId is provided
+        if (request.getUserId() != null) {
+            saveAvatarResult(request.getUserId(), result);
+        }
+
         return result;
+    }
+
+    /**
+     * Save avatar generation result to database
+     */
+    private void saveAvatarResult(Long userId, BodyGenerationResult result) {
+        try {
+            // First create or get body profile
+            BodyProfile bodyProfile = bodyProfileRepository.findByUserId(userId)
+                    .stream().findFirst()
+                    .orElseGet(() -> {
+                        // Create new body profile if not exists
+                        BodyProfile newProfile = new BodyProfile();
+                        newProfile.setUserId(userId);
+                        newProfile.setGender(result.getBodyType().contains("female") ? "Female" : "Male");
+                        newProfile.setHeightCm(170.0);
+                        newProfile.setWeightKg(65.0);
+                        newProfile.setChestCm(90.0);
+                        newProfile.setWaistCm(75.0);
+                        newProfile.setHipCm(95.0);
+                        newProfile.setShoulderCm(42.0);
+                        newProfile.setInseamCm(75.0);
+                        return bodyProfileRepository.save(newProfile);
+                    });
+
+            // Save generation result
+            BodyGenerationResultEntity entity = new BodyGenerationResultEntity();
+            entity.setBodyProfileId(bodyProfile.getId());
+            entity.setBodyType(result.getBodyType());
+            entity.setAvatarPresetCode(result.getAvatarPresetCode());
+            entity.setPreviewUrl(result.getPreviewUrl());
+            entity.setModelUrl(result.getModelUrl());
+            entity.setConfidence(result.getConfidence());
+
+            try {
+                String shapeParamsJson = objectMapper.writeValueAsString(result.getShapeParams());
+                entity.setShapeParamsJson(shapeParamsJson);
+            } catch (JsonProcessingException e) {
+                logger.error("Error serializing shape params", e);
+            }
+
+            bodyGenerationResultRepository.save(entity);
+            logger.info("Saved avatar result to database for userId: {}", userId);
+
+        } catch (Exception e) {
+            logger.error("Error saving avatar result to database", e);
+            // Continue returning result even if save fails
+        }
     }
 }
 

@@ -38,3 +38,6 @@ build/
 
 ### 3D Models (Local) ###
 src/main/resources/static/models/
+src/main/resources/static/images/
+
+

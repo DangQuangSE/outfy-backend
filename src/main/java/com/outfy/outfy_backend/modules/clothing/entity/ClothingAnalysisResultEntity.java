@@ -29,6 +29,9 @@ public class ClothingAnalysisResultEntity {
     @Column(name = "preview_url")
     private String previewUrl;
 
+    @Column(name = "model_url")
+    private String modelUrl;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
@@ -52,6 +55,8 @@ public class ClothingAnalysisResultEntity {
     public void setTemplateCode(String templateCode) { this.templateCode = templateCode; }
     public String getPreviewUrl() { return previewUrl; }
     public void setPreviewUrl(String previewUrl) { this.previewUrl = previewUrl; }
+    public String getModelUrl() { return modelUrl; }
+    public void setModelUrl(String modelUrl) { this.modelUrl = modelUrl; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }

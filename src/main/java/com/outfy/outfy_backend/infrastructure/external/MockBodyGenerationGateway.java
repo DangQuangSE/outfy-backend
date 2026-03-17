@@ -15,12 +15,12 @@ public class MockBodyGenerationGateway implements IBodyGenerationGateway {
 
     // Model URL mapping - using local GLB files
     private static final Map<String, String> MODEL_URL_MAP = Map.of(
-            "slim_male", "/models/slim_male.glb",
-            "regular_male", "/models/regular_male.glb",
-            "broad_male", "/models/broad_male.glb",
-            "slim_female", "/models/slim_female.glb",
-            "regular_female", "/models/regular_female.glb",
-            "curvy_female", "/models/curvy_female.glb"
+            "slim_male", "/models/body/slim_male.glb",
+            "regular_male", "/models/body/regular_male.glb",
+            "broad_male", "/models/body/broad_male.glb",
+            "slim_female", "/models/body/slim_female.glb",
+            "regular_female", "/models/body/regular_female.glb",
+            "curvy_female", "/models/body/curvy_female.glb"
     );
 
     @Override
@@ -30,7 +30,7 @@ public class MockBodyGenerationGateway implements IBodyGenerationGateway {
         // Simplified version - returns default values
         String bodyType = "Regular";
         String avatarPresetCode = "regular_01";
-        String modelUrl = "/models/regular_female.glb";
+        String modelUrl = "/models/body/regular_female.glb";
         
         Map<String, Double> shapeParams = createDefaultShapeParams();
         
@@ -65,7 +65,7 @@ public class MockBodyGenerationGateway implements IBodyGenerationGateway {
         
         // Step 5: Get model URL
         String modelKey = (bodyType + "_" + gender).toLowerCase();
-        String modelUrl = MODEL_URL_MAP.getOrDefault(modelKey, "/models/regular_female.glb");
+        String modelUrl = MODEL_URL_MAP.getOrDefault(modelKey, "/models/body/regular_female.glb");
         
         // Step 6: Generate shape parameters
         Map<String, Double> shapeParams = generateShapeParams(
